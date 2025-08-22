@@ -8,10 +8,10 @@
 		<link rel="icon" href="static/favicon" type="image/x-icon" >
 	</head>
 	<body>
-		<form>
+		<form action="tasks" method="POST">
 			<div>
-				<label name="name" html-for="name" />
-				<input type="text" id="name" />
+				<label for="task">Task</label>
+				<input type="text" id="task" name="task"/>
 			</div>
 
 			<button type="submit">Add</button>
