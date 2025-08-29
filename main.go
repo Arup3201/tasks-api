@@ -1,16 +1,19 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+
+	tasks "github.com/Arup3201/gotasks/internal/handlers"
 )
 
 const PORT = ":8000"
 
 func main() {
-	http.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, world!\n")
+	http.HandleFunc("/tasks", func (w http.ResponseWriter, r *http.Request) {
+		if r.Method==http.MethodGet {
+			tasks.GetTasks(w, r)
+		}
 	})
 
 

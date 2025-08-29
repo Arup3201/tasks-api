@@ -1,8 +1,11 @@
 package tasks
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
+
+	"github.com/Arup3201/gotasks/internal/storage"
 )
 
 func GetTasks(w http.ResponseWriter, r *http.Request) {
@@ -12,6 +15,11 @@ func GetTasks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tasks, err := storage.GetAll("data/tasks.json")
+	if err != nil {
+		http.Error(w, "Failed to open tasks.json", http.StatusInternalServerError)
+		return
+	}
 
+	json.NewEncoder(w).Encode(tasks)
 }
-
