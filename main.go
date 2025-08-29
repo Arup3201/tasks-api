@@ -19,6 +19,10 @@ func main() {
 			handlers.AddTask(w, r)
 		}
 
+		if r.Method == http.MethodPut {
+			handlers.EditTask(w, r)
+		}
+
 		http.Error(w, "METHOD_NOT_ALLOWED", http.StatusMethodNotAllowed)
 	})
 
