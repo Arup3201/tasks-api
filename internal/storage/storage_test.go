@@ -6,19 +6,18 @@ import (
 	"time"
 
 	"github.com/Arup3201/gotasks/internal/models"
-	"github.com/Arup3201/gotasks/internal/storage"
 )
 
 func TestCreateStorage(t *testing.T) {
 	testFile := "../data/test.json"
-	_, err := storage.CreateStorage(testFile)
+	_, err := CreateStorage(testFile)
 	if err != nil {
-		t.Errorf("storage.CreateStorage failed: %v", err)
+		t.Errorf("CreateStorage failed: %v", err)
 	}
 
 	_, err = os.Open("../data/test.json")
 	if err != nil {
-		t.Errorf("storage.CreateStorage did not create file")
+		t.Errorf("CreateStorage did not create file")
 	}
 }
 
@@ -32,12 +31,12 @@ func TestAdd(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	err := storage.Add(testTask, testFile)
+	err := Add(testTask, testFile)
 	if err != nil {
-		t.Errorf("storage.Add() failed to add: %v", err)
+		t.Errorf("Add() failed to add: %v", err)
 	}
 
-	tasks, _ := storage.GetAll(testFile)
+	tasks, _ := GetAll(testFile)
 	saved := false
 	for _, task := range tasks {
 		if task.Id == testTask.Id {
@@ -46,7 +45,7 @@ func TestAdd(t *testing.T) {
 	}
 
 	if !saved {
-		t.Errorf("storage.Add() did not save")
+		t.Errorf("Add() did not save")
 	}
 }
 
@@ -54,12 +53,12 @@ func TestDelete(t *testing.T) {
 	testFile := "../data/test.json"
 	testTaskId := "T002"
 
-	err := storage.Delete(testTaskId, testFile)
+	err := Delete(testTaskId, testFile)
 	if err != nil {
-		t.Errorf("storage delete failed: %v", err)
+		t.Errorf("delete failed: %v", err)
 	}
 
-	tasks, _ := storage.GetAll(testFile)
+	tasks, _ := GetAll(testFile)
 	for _, task := range tasks {
 		if task.Id == testTaskId {
 			t.Errorf("task was not deleted")
@@ -68,13 +67,13 @@ func TestDelete(t *testing.T) {
 }
 
 func TestRemoveStorage(t *testing.T) {
-	err := storage.RemoveStorage("../data/test.json")
+	err := RemoveStorage("../data/test.json")
 	if err != nil {
-		t.Errorf("storage.RemoveStorage failed: %v", err)
+		t.Errorf("RemoveStorage failed: %v", err)
 	}
 
 	_, err = os.Open("../data/test.json")
 	if err==nil {
-		t.Errorf("storage.RemoveStorage did not remove the storage file")
+		t.Errorf("RemoveStorage did not remove the file")
 	}
 }
