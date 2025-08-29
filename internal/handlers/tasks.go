@@ -20,6 +20,7 @@ func GetTasks(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to open tasks.json", http.StatusInternalServerError)
 		return
 	}
-
+	
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tasks)
 }
