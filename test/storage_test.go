@@ -50,6 +50,23 @@ func TestAdd(t *testing.T) {
 	}
 }
 
+func TestDelete(t *testing.T) {
+	testFile := "../data/test.json"
+	testTaskId := "T002"
+
+	err := storage.Delete(testTaskId, testFile)
+	if err != nil {
+		t.Errorf("storage delete failed: %v", err)
+	}
+
+	tasks, _ := storage.GetAll(testFile)
+	for _, task := range tasks {
+		if task.Id == testTaskId {
+			t.Errorf("task was not deleted")
+		}
+	}
+}
+
 func TestRemoveStorage(t *testing.T) {
 	err := storage.RemoveStorage("../data/test.json")
 	if err != nil {
