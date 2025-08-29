@@ -52,13 +52,7 @@ func Save(tasks []models.Task, storage string) error {
 		return fmt.Errorf("failed to marshal data: %v", err)
 	}
 
-	f, err := os.Open(storage)
-	if err != nil {
-		return fmt.Errorf("failed to open %s: %v", storage, err)
-	}
-	defer f.Close()
-
-	_, err = f.Write(data)
+	err = os.WriteFile(storage, data, 0666)
 	if err != nil {
 		return fmt.Errorf("failed to write data to %s: %v", storage, err)
 	}
