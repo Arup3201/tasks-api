@@ -18,6 +18,8 @@ func main() {
 		if r.Method == http.MethodPost {
 			handlers.AddTask(w, r)
 		}
+
+		http.Error(w, "METHOD_NOT_ALLOWED", http.StatusMethodNotAllowed)
 	})
 
 	log.Printf("Starting the server at %s\n", PORT)
