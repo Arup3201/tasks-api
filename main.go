@@ -10,12 +10,15 @@ import (
 const PORT = ":8000"
 
 func main() {
-	http.HandleFunc("/tasks", func (w http.ResponseWriter, r *http.Request) {
-		if r.Method==http.MethodGet {
+	http.HandleFunc("/tasks", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
 			handlers.GetTasks(w, r)
 		}
-	})
 
+		if r.Method == http.MethodPost {
+			handlers.AddTask(w, r)
+		}
+	})
 
 	log.Printf("Starting the server at %s\n", PORT)
 	log.Fatal(http.ListenAndServe(PORT, nil))
