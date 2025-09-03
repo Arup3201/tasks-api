@@ -88,7 +88,7 @@ func EditTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if payload.Title==nil && payload.Description==nil && payload.Completed {
+	if payload.Title==nil && payload.Description==nil && payload.Completed==nil {
 		log.Fatalf("EditTask payload is empty")
 		http.Error(w, "NOT_MODIFIED", http.StatusNotModified)
 		return
@@ -97,7 +97,7 @@ func EditTask(w http.ResponseWriter, r *http.Request) {
 	task, err := storage.Get(payload.Id, "data/tasks.json")
 	if err != nil {
 		log.Fatalf("EditTask storage.Get failed: %v", err)
-		http.Error(w, "SERVER_ERROR", http.StatusInsufficientStorage)
+		http.Error(w, "SERVER_ERROR", http.StatusInternalServerError)
 		return
 	}
 
@@ -111,5 +111,10 @@ func EditTask(w http.ResponseWriter, r *http.Request) {
 		task.Completed = *payload.Completed
 	}
 
-	storage.Edit(payload.Id, task, "data/tasks.json")
+	err = storage.Edit(payload.Id, task, "data/tasks.json")
+	if err!=nil {
+		log.Fatalf("EditTask storage.Edit error: %v", err)
+		http.Error(w, "SERVER_ERROR", http.StatusInternalServerError)
+		return
+	}
 }
