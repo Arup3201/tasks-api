@@ -27,13 +27,8 @@ func GetTasks(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type CreatePayload struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-}
-
 func AddTask(w http.ResponseWriter, r *http.Request) {
-	var payload CreatePayload
+	var payload models.CreateTask
 	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
 		log.Fatalf("AddTask failed: %v", err)
@@ -66,15 +61,8 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(task)
 }
 
-type EditTaskPayload struct {
-	Id string `json:"id"`
-	Title *string `json:"title,omitempty"`
-	Description *string `json:"description,omitempty"`
-	Completed *bool `json:"completed,omitempty"`
-}
-
 func EditTask(w http.ResponseWriter, r *http.Request) {
-	var payload EditTaskPayload
+	var payload models.EditTask
 	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
 		log.Fatalf("EditTask decode error: %v", err)
