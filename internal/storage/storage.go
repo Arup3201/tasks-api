@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/Arup3201/gotasks/internal/models"
 )
@@ -46,6 +47,27 @@ func GetAll(storage string) ([]models.Task, error) {
 	return allTasks, nil
 }
 
+func Get(storage, id string) (models.Task, error) {
+	data, err := os.ReadFile(storage)
+	if err != nil {
+		return models.Task{}, fmt.Errorf("failed to open %s: %v", storage, err)
+	}
+
+	allTasks := []models.Task{}
+	err = json.Unmarshal(data, &allTasks)
+	if err != nil {
+		return models.Task{}, fmt.Errorf("failed to unmarshal %s: %v", storage, err)
+	}
+
+	for _, task := range allTasks {
+		if task.Id == id {
+			return task, nil
+		}
+	}
+
+	return models.Task{}, fmt.Errorf("storage get failed")
+}
+
 func Save(tasks []models.Task, storage string) error {
 	data, err := json.Marshal(tasks)
 	if err != nil {
@@ -67,6 +89,32 @@ func Add(task models.Task, storage string) (error) {
 	}
 
 	allTasks = append(allTasks, task)
+	err = Save(allTasks, storage)
+	if err != nil {
+		return fmt.Errorf("failed to save data: %v", err)
+	}
+
+	return nil
+}
+
+func Edit(id string, data models.Task, storage string) (error) {
+	allTasks, err := GetAll(storage)
+	if err != nil {
+		return fmt.Errorf("failed to get all tasks: %v", err)
+	}
+	
+	for i, task := range allTasks {
+		if task.Id == id {
+			task.Title = data.Title
+			task.Description = data.Description
+			task.Completed = data.Completed
+			task.CreatedAt = data.CreatedAt
+			task.UpdatedAt = time.Now()
+
+			allTasks[i] = task
+		}
+	}
+
 	err = Save(allTasks, storage)
 	if err != nil {
 		return fmt.Errorf("failed to save data: %v", err)
