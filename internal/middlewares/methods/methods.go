@@ -22,8 +22,7 @@ func Map(mHandles []MethodHandler) http.HandlerFunc {
 		}
 
 		if !matched {
-			log.Printf("%s %s - %d", r.Method, r.URL.Path, http.StatusForbidden)
-			log.Printf("[SERVER] Method not allowed")
+			log.Printf("%s %s - %d", r.Method, r.URL.Path, http.StatusMethodNotAllowed)
 		}
 	}
 }
