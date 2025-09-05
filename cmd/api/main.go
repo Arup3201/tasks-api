@@ -13,9 +13,16 @@ import (
 const PORT = ":8000"
 
 func main() {
-	http.HandleFunc("/tasks", middlewares.Chain(handlers.GetTasks, logging.HttpLogger(), methods.Methods([]string{"GET"})))
-	http.HandleFunc("/tasks", middlewares.Chain(handlers.AddTask, logging.HttpLogger(), methods.Methods([]string{"POST"})))
-	http.HandleFunc("/tasks", middlewares.Chain(handlers.EditTask, logging.HttpLogger(), methods.Methods([]string{"PUT"})))
+	http.HandleFunc("/tasks", middlewares.Chain(methods.Map([]methods.MethodHandler{
+		{
+			Handler: handlers.GetTasks,
+			Method:  "GET",
+		},
+		{
+			Handler: handlers.AddTask,
+			Method:  "POST",
+		},
+	}), logging.HttpLogger()))
 
 	log.Printf("Starting the server at %s\n", PORT)
 	log.Fatal(http.ListenAndServe(PORT, nil))
