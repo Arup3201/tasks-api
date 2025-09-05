@@ -17,6 +17,7 @@ func Map(mHandles []MethodHandler) http.HandlerFunc {
 			if r.Method == mHandle.Method {
 				mHandle.Handler(w, r)
 				matched = true
+				break
 			}
 		}
 
