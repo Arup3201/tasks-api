@@ -1,7 +1,6 @@
 package methods
 
 import (
-	"log"
 	"net/http"
 )
 
@@ -17,12 +16,12 @@ func Map(mHandles []MethodHandler) http.HandlerFunc {
 			if r.Method == mHandle.Method {
 				mHandle.Handler(w, r)
 				matched = true
+				break
 			}
 		}
 
 		if !matched {
-			log.Printf("%s %s - %d", r.Method, r.URL.Path, http.StatusForbidden)
-			log.Printf("[SERVER] Method not allowed")
+			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
 	}
 }
