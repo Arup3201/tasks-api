@@ -10,16 +10,17 @@ import (
 )
 
 func HttpLogger() middlewares.Middleware {
-	return func (fn http.HandlerFunc) http.HandlerFunc {
-		return func (w http.ResponseWriter, r *http.Request) {
+	return func(fn http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
 			recorder := httptest.NewRecorder()
 			fn(recorder, r)
 
 			log.Printf("%s %s - %d", r.Method, r.URL.Path, recorder.Code)
 
+			w.WriteHeader(recorder.Result().StatusCode)
 			maps.Copy(w.Header(), recorder.Result().Header)
 			_, err := recorder.Body.WriteTo(w)
-			if err!=nil {
+			if err != nil {
 				log.Fatalf("HttpLogger write to response body error: %v", err)
 			}
 		}

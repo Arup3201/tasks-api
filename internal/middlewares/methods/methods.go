@@ -1,7 +1,6 @@
 package methods
 
 import (
-	"log"
 	"net/http"
 )
 
@@ -22,7 +21,6 @@ func Map(mHandles []MethodHandler) http.HandlerFunc {
 		}
 
 		if !matched {
-			log.Printf("%s %s - %d", r.Method, r.URL.Path, http.StatusMethodNotAllowed)
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
 	}
