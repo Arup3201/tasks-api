@@ -9,7 +9,7 @@ go build cmd/api/main.go
 ./main.exe
 ```
 
-It will start the server, and then you can do any of the following:
+It will start the server at port `8080`, and then you can perform any of the following requests:
 
 - `GET /tasks`: Get list of tasks
 - `GET /tasks/:id`: Get a task with ID `id`
