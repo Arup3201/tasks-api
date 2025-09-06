@@ -59,7 +59,7 @@ func AddTask(task models.Task) *models.Task {
 	return &task
 }
 
-func EditTask(id string, edit models.EditTask) (*models.Task, bool) {
+func UpdateTask(id string, edit models.UpdateTask) (*models.Task, bool) {
 	updated := false
 	for i, task := range tasks {
 		if task.Id == id {

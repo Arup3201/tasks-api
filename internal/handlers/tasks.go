@@ -58,7 +58,33 @@ func EditTask(c *gin.Context) {
 		return
 	}
 
-	task, ok := storage.EditTask(id, payload)
+	task, ok := storage.UpdateTask(id, models.UpdateTask{
+		Title:       payload.Title,
+		Description: payload.Description,
+		Completed:   nil,
+	})
+	if !ok {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with ID '%s' not found", id)})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, task)
+}
+
+func MarkTask(c *gin.Context) {
+	var id = c.Param("id")
+	var payload models.MarkTask
+
+	if err := c.BindJSON(&payload); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error in unpacking the payload"})
+		return
+	}
+
+	task, ok := storage.UpdateTask(id, models.UpdateTask{
+		Title:       nil,
+		Description: nil,
+		Completed:   payload.Completed,
+	})
 	if !ok {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with ID '%s' not found", id)})
 		return
