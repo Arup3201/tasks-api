@@ -1,108 +1,79 @@
 package handlers
 
 import (
-	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/Arup3201/gotasks/internal/models"
 	"github.com/Arup3201/gotasks/internal/storage"
+	"github.com/Arup3201/gotasks/internal/utils"
+	"github.com/gin-gonic/gin"
 )
 
-func GetTasks(w http.ResponseWriter, r *http.Request) {
-	tasks, err := storage.GetAll("data/tasks.json")
-	if err != nil {
-		log.Fatalf("GetTask failed: %v", err)
-		http.Error(w, "SERVER_ERROR", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(tasks)
-	if err != nil {
-		log.Fatalf("GetTask failed: %v", err)
-		http.Error(w, "SERVER_ERROR", http.StatusInternalServerError)
-		return
-	}
+func GetAllTasks(c *gin.Context) {
+	var tasks []models.Task = storage.GetAllTasks()
+	c.IndentedJSON(http.StatusOK, tasks)
 }
 
-func AddTask(w http.ResponseWriter, r *http.Request) {
+func GetTaskWithId(c *gin.Context) {
+	id := c.Param("id")
+
+	task, ok := storage.GetTaskWithId(id)
+	if !ok {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with ID '%s' not found", id)})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, task)
+}
+
+func AddTask(c *gin.Context) {
 	var payload models.CreateTask
-	err := json.NewDecoder(r.Body).Decode(&payload)
-	if err != nil {
-		log.Fatalf("AddTask failed: %v", err)
-		http.Error(w, "BAD_REQUEST", http.StatusBadRequest)
+
+	if err := c.BindJSON(&payload); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error in unpacking the payload"})
 		return
 	}
 
-	if payload.Title == "" || payload.Description == "" {
-		log.Fatalf("payload is invalid")
-		http.Error(w, "BAD_REQUEST", http.StatusBadRequest)
-		return
-	}
-
-	task := models.Task{
-		Id:          "T" + time.Time.String(time.Now()),
+	newTask := models.Task{
+		Id:          utils.GenerateID("TASK_"),
 		Title:       payload.Title,
 		Description: payload.Description,
 		Completed:   false,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
-	err = storage.Add(task, "data/tasks.json")
-	if err != nil {
-		log.Fatalf("AddTask failed: %v", err)
-		http.Error(w, "SERVER_ERROR", http.StatusInternalServerError)
-		return
-	}
+	storage.AddTask(newTask)
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(task)
+	c.IndentedJSON(http.StatusCreated, newTask)
 }
 
-func EditTask(w http.ResponseWriter, r *http.Request) {
+func EditTask(c *gin.Context) {
+	var id = c.Param("id")
 	var payload models.EditTask
-	err := json.NewDecoder(r.Body).Decode(&payload)
-	if err != nil {
-		log.Fatalf("EditTask decode error: %v", err)
-		http.Error(w, "SERVER_ERROR", http.StatusInternalServerError)
+
+	if err := c.BindJSON(&payload); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error in unpacking the payload"})
 		return
 	}
 
-	if payload.Id == "" {
-		log.Fatalf("EditTask id missing in payload")
-		http.Error(w, "BAD_REQUEST", http.StatusBadRequest)
+	task, ok := storage.EditTask(id, payload)
+	if !ok {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with ID '%s' not found", id)})
 		return
 	}
 
-	if payload.Title==nil && payload.Description==nil && payload.Completed==nil {
-		log.Fatalf("EditTask payload is empty")
-		http.Error(w, "NOT_MODIFIED", http.StatusNotModified)
+	c.IndentedJSON(http.StatusOK, task)
+}
+
+func DeleteTask(c *gin.Context) {
+	var id = c.Param("id")
+	task, ok := storage.DeleteTask(id)
+	if !ok {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with ID '%s' not found", id)})
 		return
 	}
 
-	task, err := storage.Get(payload.Id, "data/tasks.json")
-	if err != nil {
-		log.Fatalf("EditTask storage.Get failed: %v", err)
-		http.Error(w, "SERVER_ERROR", http.StatusInternalServerError)
-		return
-	}
-
-	if payload.Title!=nil && *payload.Title!= task.Title {
-		task.Title = *payload.Title
-	}
-	if payload.Description!=nil && *payload.Description!=task.Description {
-		task.Description = *payload.Description
-	}
-	if payload.Completed!=nil && *payload.Completed!=task.Completed {
-		task.Completed = *payload.Completed
-	}
-
-	err = storage.Edit(payload.Id, task, "data/tasks.json")
-	if err!=nil {
-		log.Fatalf("EditTask storage.Edit error: %v", err)
-		http.Error(w, "SERVER_ERROR", http.StatusInternalServerError)
-		return
-	}
+	c.IndentedJSON(http.StatusOK, task)
 }

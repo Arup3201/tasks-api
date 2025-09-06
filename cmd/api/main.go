@@ -1,29 +1,20 @@
 package main
 
 import (
-	"log"
-	"net/http"
-
 	"github.com/Arup3201/gotasks/internal/handlers"
-	"github.com/Arup3201/gotasks/internal/middlewares"
-	"github.com/Arup3201/gotasks/internal/middlewares/logging"
-	"github.com/Arup3201/gotasks/internal/middlewares/methods"
+	"github.com/gin-gonic/gin"
 )
 
 const PORT = ":8000"
 
 func main() {
-	http.HandleFunc("/tasks", middlewares.Chain(methods.Map([]methods.MethodHandler{
-		{
-			Handler: handlers.GetTasks,
-			Method:  "GET",
-		},
-		{
-			Handler: handlers.AddTask,
-			Method:  "POST",
-		},
-	}), logging.HttpLogger()))
+	router := gin.Default()
 
-	log.Printf("Starting the server at %s\n", PORT)
-	log.Fatal(http.ListenAndServe(PORT, nil))
+	router.GET("/tasks", handlers.GetAllTasks)
+	router.POST("/tasks", handlers.AddTask)
+	router.GET("/tasks/:id", handlers.GetTaskWithId)
+	router.PUT("/tasks/:id", handlers.EditTask)
+	router.DELETE("/tasks/:id", handlers.DeleteTask)
+
+	router.Run("localhost:8080")
 }
