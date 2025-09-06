@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"strings"
 	"time"
 
 	"github.com/Arup3201/gotasks/internal/models"
@@ -96,4 +97,15 @@ func DeleteTask(id string) (*models.Task, bool) {
 	}
 
 	return nil, false
+}
+
+func SearchTasks(query string) []models.Task {
+	matches := []models.Task{}
+	for _, task := range tasks {
+		if strings.Contains(strings.ToLower(task.Title), strings.ToLower(query)) {
+			matches = append(matches, task)
+		}
+	}
+
+	return matches
 }

@@ -103,3 +103,16 @@ func DeleteTask(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusOK, task)
 }
+
+func SearchTask(c *gin.Context) {
+	var query string = c.Query("q")
+
+	if query == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "'q' can't be empty while searching"})
+		return
+	}
+
+	tasks := storage.SearchTasks(query)
+
+	c.IndentedJSON(http.StatusOK, tasks)
+}
