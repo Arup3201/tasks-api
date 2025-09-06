@@ -3,12 +3,12 @@ package models
 import "time"
 
 type Task struct {
-	Id string `json:"id"`
-	Title string `json:"title"`
-	Description string `json:"description"`
-	Completed bool `json:"completed"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Id          string    `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Completed   bool      `json:"completed"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type CreateTask struct {
@@ -17,9 +17,7 @@ type CreateTask struct {
 }
 
 type EditTask struct {
-	Id string `json:"id"`
-	Title *string `json:"title,omitempty"`
+	Title       *string `json:"title,omitempty"`
 	Description *string `json:"description,omitempty"`
-	Completed *bool `json:"completed,omitempty"`
+	Completed   *bool   `json:"completed,omitempty"`
 }
-
