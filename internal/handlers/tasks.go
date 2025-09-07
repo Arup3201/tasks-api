@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Arup3201/gotasks/internal/errors"
 	"github.com/Arup3201/gotasks/internal/models"
 	"github.com/Arup3201/gotasks/internal/storage"
 	"github.com/Arup3201/gotasks/internal/utils"
@@ -21,7 +22,6 @@ func GetTaskWithId(c *gin.Context) {
 
 	task, ok := storage.GetTaskWithId(id)
 	if !ok {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with ID '%s' not found", id)})
 		return
 	}
 
@@ -36,10 +36,30 @@ func AddTask(c *gin.Context) {
 		return
 	}
 
+	if payload.Title == nil {
+		c.Error(errors.NewMissingBodyProperyError(nil, []errors.ErrorDetail{
+			{
+				Detail:  "The body property 'title' is required",
+				Pointer: "#/title",
+			},
+		}))
+		return
+	}
+
+	if payload.Description == nil {
+		c.Error(errors.NewMissingBodyProperyError(nil, []errors.ErrorDetail{
+			{
+				Detail:  "The body property 'description' is required",
+				Pointer: "#/description",
+			},
+		}))
+		return
+	}
+
 	newTask := models.Task{
 		Id:          utils.GenerateID("TASK_"),
-		Title:       payload.Title,
-		Description: payload.Description,
+		Title:       *payload.Title,
+		Description: *payload.Description,
 		Completed:   false,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
