@@ -41,6 +41,7 @@ func NewMissingBodyProperyError(err error, errors []ErrorDetail) error {
 			Detail: "The request is missing an expected body property.",
 			Status: 400,
 			Code:   "400-09",
+			Cause:  err,
 		},
 		Errors: errors,
 	}

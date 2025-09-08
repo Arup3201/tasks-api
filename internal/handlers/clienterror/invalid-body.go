@@ -41,6 +41,7 @@ func NewInvalidBodyValueError(err error, errors []ErrorDetail) error {
 			Detail: "The request body contains an invalid body property value.",
 			Status: 400,
 			Code:   "400-07",
+			Cause:  err,
 		},
 		Errors: errors,
 	}
