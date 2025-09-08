@@ -12,8 +12,8 @@ type Task struct {
 }
 
 type CreateTask struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
+	Title       *string `json:"title"`
+	Description *string `json:"description"`
 }
 
 type UpdateTask struct {

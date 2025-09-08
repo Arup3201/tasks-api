@@ -10,6 +10,8 @@ const PORT = ":8000"
 func main() {
 	router := gin.Default()
 
+	router.Use(handlers.HandleErrors())
+
 	router.GET("/tasks", handlers.GetAllTasks)
 	router.POST("/tasks", handlers.AddTask)
 	router.GET("/tasks/:id", handlers.GetTaskWithId)

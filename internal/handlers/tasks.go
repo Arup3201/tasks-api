@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Arup3201/gotasks/internal/handlers/clienterror"
 	"github.com/Arup3201/gotasks/internal/models"
 	"github.com/Arup3201/gotasks/internal/storage"
 	"github.com/Arup3201/gotasks/internal/utils"
@@ -21,7 +22,7 @@ func GetTaskWithId(c *gin.Context) {
 
 	task, ok := storage.GetTaskWithId(id)
 	if !ok {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with ID '%s' not found", id)})
+		c.Error(clienterror.NewNotFoundError(nil))
 		return
 	}
 
@@ -32,14 +33,54 @@ func AddTask(c *gin.Context) {
 	var payload models.CreateTask
 
 	if err := c.BindJSON(&payload); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error in unpacking the payload"})
+		c.Error(fmt.Errorf("c.BindJSON failed with error %v", err))
+		return
+	}
+
+	if payload.Title == nil {
+		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.RequestBodyError{
+			{
+				Detail:  "The body property 'title' is required",
+				Pointer: "#/title",
+			},
+		}))
+		return
+	}
+
+	if payload.Description == nil {
+		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.RequestBodyError{
+			{
+				Detail:  "The body property 'description' is required",
+				Pointer: "#/description",
+			},
+		}))
+		return
+	}
+
+	if *payload.Title == "" {
+		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.RequestBodyError{
+			{
+				Detail:  "Body property 'title' can't be empty",
+				Pointer: "#/title",
+			},
+		}))
+		return
+	}
+
+	if *payload.Description == "" {
+		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.RequestBodyError{
+			{
+				Detail:  "Body property 'description' can't be empty",
+				Pointer: "#/description",
+			},
+		}))
 		return
 	}
 
 	newTask := models.Task{
 		Id:          utils.GenerateID("TASK_"),
-		Title:       payload.Title,
-		Description: payload.Description,
+		Title:       *payload.Title,
+		Description: *payload.Description,
 		Completed:   false,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
@@ -54,7 +95,37 @@ func EditTask(c *gin.Context) {
 	var payload models.EditTask
 
 	if err := c.BindJSON(&payload); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error in unpacking the payload"})
+		c.Error(fmt.Errorf("c.BindJSON failed with error %v", err))
+		return
+	}
+
+	if payload.Title == nil && payload.Description == nil {
+		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.RequestBodyError{
+			{
+				Detail:  "Atleast one body property 'title' or 'description' is required",
+				Pointer: "#/title, #/description",
+			},
+		}))
+		return
+	}
+
+	if payload.Title != nil && *payload.Title == "" {
+		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.RequestBodyError{
+			{
+				Detail:  "Body property 'title' can't be empty",
+				Pointer: "#/title",
+			},
+		}))
+		return
+	}
+
+	if payload.Description != nil && *payload.Description == "" {
+		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.RequestBodyError{
+			{
+				Detail:  "Body property 'description' can't be empty",
+				Pointer: "#/description",
+			},
+		}))
 		return
 	}
 
@@ -64,7 +135,7 @@ func EditTask(c *gin.Context) {
 		Completed:   nil,
 	})
 	if !ok {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with ID '%s' not found", id)})
+		c.Error(clienterror.NewNotFoundError(nil))
 		return
 	}
 
@@ -76,7 +147,17 @@ func MarkTask(c *gin.Context) {
 	var payload models.MarkTask
 
 	if err := c.BindJSON(&payload); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error in unpacking the payload"})
+		c.Error(fmt.Errorf("c.BindJSON failed with error %v", err))
+		return
+	}
+
+	if payload.Completed == nil {
+		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.RequestBodyError{
+			{
+				Detail:  "Body property 'completed' is required",
+				Pointer: "#/completed",
+			},
+		}))
 		return
 	}
 
@@ -86,7 +167,7 @@ func MarkTask(c *gin.Context) {
 		Completed:   payload.Completed,
 	})
 	if !ok {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with ID '%s' not found", id)})
+		c.Error(clienterror.NewNotFoundError(nil))
 		return
 	}
 
@@ -97,7 +178,7 @@ func DeleteTask(c *gin.Context) {
 	var id = c.Param("id")
 	task, ok := storage.DeleteTask(id)
 	if !ok {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with ID '%s' not found", id)})
+		c.Error(clienterror.NewNotFoundError(nil))
 		return
 	}
 
@@ -108,7 +189,12 @@ func SearchTask(c *gin.Context) {
 	var query string = c.Query("q")
 
 	if query == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "'q' can't be empty while searching"})
+		c.Error(clienterror.NewInvalidRequestParamError(nil, []clienterror.RequestParamError{
+			{
+				Detail:    "Search query can't be empty",
+				Parameter: "q",
+			},
+		}))
 		return
 	}
 
