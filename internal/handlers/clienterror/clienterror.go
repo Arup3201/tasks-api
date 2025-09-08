@@ -17,7 +17,12 @@ type BaseError struct {
 	Cause  error  `json:"-"`
 }
 
-type ErrorDetail struct {
+type RequestBodyError struct {
 	Detail  string `json:"detail"`
 	Pointer string `json:"pointer"`
+}
+
+type RequestParamError struct {
+	Detail    string `json:"detail:"`
+	Parameter string `json:"parameter"`
 }

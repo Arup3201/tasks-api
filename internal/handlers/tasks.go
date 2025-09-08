@@ -38,7 +38,7 @@ func AddTask(c *gin.Context) {
 	}
 
 	if payload.Title == nil {
-		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.ErrorDetail{
+		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.RequestBodyError{
 			{
 				Detail:  "The body property 'title' is required",
 				Pointer: "#/title",
@@ -48,7 +48,7 @@ func AddTask(c *gin.Context) {
 	}
 
 	if payload.Description == nil {
-		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.ErrorDetail{
+		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.RequestBodyError{
 			{
 				Detail:  "The body property 'description' is required",
 				Pointer: "#/description",
@@ -58,7 +58,7 @@ func AddTask(c *gin.Context) {
 	}
 
 	if *payload.Title == "" {
-		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.ErrorDetail{
+		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.RequestBodyError{
 			{
 				Detail:  "Body property 'title' can't be empty",
 				Pointer: "#/title",
@@ -68,7 +68,7 @@ func AddTask(c *gin.Context) {
 	}
 
 	if *payload.Description == "" {
-		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.ErrorDetail{
+		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.RequestBodyError{
 			{
 				Detail:  "Body property 'description' can't be empty",
 				Pointer: "#/description",
@@ -100,7 +100,7 @@ func EditTask(c *gin.Context) {
 	}
 
 	if payload.Title == nil && payload.Description == nil {
-		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.ErrorDetail{
+		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.RequestBodyError{
 			{
 				Detail:  "Atleast one body property 'title' or 'description' is required",
 				Pointer: "#/title, #/description",
@@ -110,7 +110,7 @@ func EditTask(c *gin.Context) {
 	}
 
 	if payload.Title != nil && *payload.Title == "" {
-		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.ErrorDetail{
+		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.RequestBodyError{
 			{
 				Detail:  "Body property 'title' can't be empty",
 				Pointer: "#/title",
@@ -120,7 +120,7 @@ func EditTask(c *gin.Context) {
 	}
 
 	if payload.Description != nil && *payload.Description == "" {
-		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.ErrorDetail{
+		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.RequestBodyError{
 			{
 				Detail:  "Body property 'description' can't be empty",
 				Pointer: "#/description",
@@ -152,7 +152,7 @@ func MarkTask(c *gin.Context) {
 	}
 
 	if payload.Completed == nil {
-		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.ErrorDetail{
+		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.RequestBodyError{
 			{
 				Detail:  "Body property 'completed' is required",
 				Pointer: "#/completed",
@@ -189,7 +189,12 @@ func SearchTask(c *gin.Context) {
 	var query string = c.Query("q")
 
 	if query == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "'q' can't be empty while searching"})
+		c.Error(clienterror.NewInvalidRequestParamError(nil, []clienterror.RequestParamError{
+			{
+				Detail:    "Search query can't be empty",
+				Parameter: "q",
+			},
+		}))
 		return
 	}
 

@@ -7,7 +7,7 @@ import (
 
 type MissingBodyPropertyError struct {
 	BaseError
-	Errors []ErrorDetail `json:"errors"`
+	Errors []RequestBodyError `json:"errors"`
 }
 
 func (e *MissingBodyPropertyError) Error() string {
@@ -33,7 +33,7 @@ func (e *MissingBodyPropertyError) ResponseHeader() (int, map[string]string) {
 	}
 }
 
-func NewMissingBodyProperyError(err error, errors []ErrorDetail) error {
+func NewMissingBodyProperyError(err error, errors []RequestBodyError) error {
 	return &MissingBodyPropertyError{
 		BaseError: BaseError{
 			Type:   "https://problems-registry.smartbear.com/missing-body-property",

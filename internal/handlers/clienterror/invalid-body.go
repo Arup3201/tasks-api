@@ -7,7 +7,7 @@ import (
 
 type InvalidBodyValueError struct {
 	BaseError
-	Errors []ErrorDetail `json:"errors"`
+	Errors []RequestBodyError `json:"errors"`
 }
 
 func (e *InvalidBodyValueError) Error() string {
@@ -33,7 +33,7 @@ func (e *InvalidBodyValueError) ResponseHeader() (int, map[string]string) {
 	}
 }
 
-func NewInvalidBodyValueError(err error, errors []ErrorDetail) error {
+func NewInvalidBodyValueError(err error, errors []RequestBodyError) error {
 	return &InvalidBodyValueError{
 		BaseError: BaseError{
 			Type:   "https://problems-registry.smartbear.com/invalid-body-property-value",
