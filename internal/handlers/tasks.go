@@ -22,6 +22,7 @@ func GetTaskWithId(c *gin.Context) {
 
 	task, ok := storage.GetTaskWithId(id)
 	if !ok {
+		c.Error(clienterror.NewNotFoundError(nil))
 		return
 	}
 
@@ -134,7 +135,7 @@ func EditTask(c *gin.Context) {
 		Completed:   nil,
 	})
 	if !ok {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with ID '%s' not found", id)})
+		c.Error(clienterror.NewNotFoundError(nil))
 		return
 	}
 
@@ -166,7 +167,7 @@ func MarkTask(c *gin.Context) {
 		Completed:   payload.Completed,
 	})
 	if !ok {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with ID '%s' not found", id)})
+		c.Error(clienterror.NewNotFoundError(nil))
 		return
 	}
 
@@ -177,7 +178,7 @@ func DeleteTask(c *gin.Context) {
 	var id = c.Param("id")
 	task, ok := storage.DeleteTask(id)
 	if !ok {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with ID '%s' not found", id)})
+		c.Error(clienterror.NewNotFoundError(nil))
 		return
 	}
 
