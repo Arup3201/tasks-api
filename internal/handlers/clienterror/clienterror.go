@@ -1,4 +1,4 @@
-package errors
+package clienterror
 
 type ClientError interface {
 	Error() string
@@ -15,4 +15,9 @@ type BaseError struct {
 	Status int    `json:"status"`
 	Code   string `json:"code"`
 	Cause  error  `json:"-"`
+}
+
+type ErrorDetail struct {
+	Detail  string `json:"detail"`
+	Pointer string `json:"pointer"`
 }

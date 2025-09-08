@@ -1,14 +1,9 @@
-package errors
+package clienterror
 
 import (
 	"encoding/json"
 	"fmt"
 )
-
-type ErrorDetail struct {
-	Detail  string `json:"detail"`
-	Pointer string `json:"pointer"`
-}
 
 type MissingBodyPropertyError struct {
 	BaseError

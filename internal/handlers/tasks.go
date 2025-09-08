@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Arup3201/gotasks/internal/errors"
+	"github.com/Arup3201/gotasks/internal/handlers/clienterror"
 	"github.com/Arup3201/gotasks/internal/models"
 	"github.com/Arup3201/gotasks/internal/storage"
 	"github.com/Arup3201/gotasks/internal/utils"
@@ -32,12 +32,12 @@ func AddTask(c *gin.Context) {
 	var payload models.CreateTask
 
 	if err := c.BindJSON(&payload); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error in unpacking the payload"})
+		c.Error(fmt.Errorf("c.BindJSON failed with error %v", err))
 		return
 	}
 
 	if payload.Title == nil {
-		c.Error(errors.NewMissingBodyProperyError(nil, []errors.ErrorDetail{
+		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.ErrorDetail{
 			{
 				Detail:  "The body property 'title' is required",
 				Pointer: "#/title",
@@ -47,9 +47,29 @@ func AddTask(c *gin.Context) {
 	}
 
 	if payload.Description == nil {
-		c.Error(errors.NewMissingBodyProperyError(nil, []errors.ErrorDetail{
+		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.ErrorDetail{
 			{
 				Detail:  "The body property 'description' is required",
+				Pointer: "#/description",
+			},
+		}))
+		return
+	}
+
+	if *payload.Title == "" {
+		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.ErrorDetail{
+			{
+				Detail:  "Body property 'title' can't be empty",
+				Pointer: "#/title",
+			},
+		}))
+		return
+	}
+
+	if *payload.Description == "" {
+		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.ErrorDetail{
+			{
+				Detail:  "Body property 'description' can't be empty",
 				Pointer: "#/description",
 			},
 		}))
@@ -74,7 +94,37 @@ func EditTask(c *gin.Context) {
 	var payload models.EditTask
 
 	if err := c.BindJSON(&payload); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error in unpacking the payload"})
+		c.Error(fmt.Errorf("c.BindJSON failed with error %v", err))
+		return
+	}
+
+	if payload.Title == nil && payload.Description == nil {
+		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.ErrorDetail{
+			{
+				Detail:  "Atleast one body property 'title' or 'description' is required",
+				Pointer: "#/title, #/description",
+			},
+		}))
+		return
+	}
+
+	if payload.Title != nil && *payload.Title == "" {
+		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.ErrorDetail{
+			{
+				Detail:  "Body property 'title' can't be empty",
+				Pointer: "#/title",
+			},
+		}))
+		return
+	}
+
+	if payload.Description != nil && *payload.Description == "" {
+		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.ErrorDetail{
+			{
+				Detail:  "Body property 'description' can't be empty",
+				Pointer: "#/description",
+			},
+		}))
 		return
 	}
 
@@ -96,7 +146,17 @@ func MarkTask(c *gin.Context) {
 	var payload models.MarkTask
 
 	if err := c.BindJSON(&payload); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error in unpacking the payload"})
+		c.Error(fmt.Errorf("c.BindJSON failed with error %v", err))
+		return
+	}
+
+	if payload.Completed == nil {
+		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.ErrorDetail{
+			{
+				Detail:  "Body property 'completed' is required",
+				Pointer: "#/completed",
+			},
+		}))
 		return
 	}
 
