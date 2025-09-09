@@ -15,20 +15,20 @@ func HandleErrors() gin.HandlerFunc {
 		if len(c.Errors) > 0 {
 			err := c.Errors.Last().Err
 
-			clientError, ok := err.(apperr.ClientError)
+			errorResponder, ok := err.(apperr.ErrorResponder)
 			if !ok {
 				c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "An unexpected error occured"})
 				return
 			}
 
-			body, err := clientError.ResponseBody()
+			body, err := errorResponder.ResponseBody()
 			if err != nil {
-				log.Printf("ClientError.ResponseBody error: %v", err)
+				log.Printf("errorResponder.ResponseBody error: %v", err)
 				c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "An unexpected error occured"})
 				return
 			}
 
-			status, headers := clientError.ResponseHeader()
+			status, headers := errorResponder.ResponseHeader()
 			for k, v := range headers {
 				c.Writer.Header().Set(k, v)
 			}

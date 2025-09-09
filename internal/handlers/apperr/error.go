@@ -5,6 +5,14 @@ import (
 	"fmt"
 )
 
+type ErrorResponder interface {
+	Error() string
+	// ResponseBody returns response body of the error
+	ResponseBody() ([]byte, error)
+	// ResponseHeader returns status code and response headers of the error
+	ResponseHeader() (int, map[string]string)
+}
+
 type BaseError struct {
 	Type   string `json:"type"`
 	Title  string `json:"title"`
@@ -23,8 +31,6 @@ type Error struct {
 	BaseError
 	Errors []ErrorField `json:"errors"`
 }
-
-/* ClientError interface implementation */
 
 func (e *Error) Error() string {
 	if e.Cause == nil {
@@ -48,8 +54,6 @@ func (e *Error) ResponseHeader() (int, map[string]string) {
 		"Content-Type": "application/problem+json; charset=utf-8",
 	}
 }
-
-/* ................................................. */
 
 func New(errType string, title string, detail string, status int, code string, cause error, fields ...ErrorField) *Error {
 	return &Error{
