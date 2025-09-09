@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Arup3201/gotasks/internal/handlers/clienterror"
+	"github.com/Arup3201/gotasks/internal/handlers/apperr"
 	"github.com/Arup3201/gotasks/internal/models"
 	"github.com/Arup3201/gotasks/internal/storage"
 	"github.com/Arup3201/gotasks/internal/utils"
@@ -22,7 +22,7 @@ func GetTaskWithId(c *gin.Context) {
 
 	task, ok := storage.GetTaskWithId(id)
 	if !ok {
-		c.Error(clienterror.NewNotFoundError(nil))
+		c.Error(apperr.NotFoundError())
 		return
 	}
 
@@ -38,41 +38,33 @@ func AddTask(c *gin.Context) {
 	}
 
 	if payload.Title == nil {
-		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.RequestBodyError{
-			{
-				Detail:  "The body property 'title' is required",
-				Pointer: "#/title",
-			},
+		c.Error(apperr.MissingBodyError(apperr.ErrorField{
+			Reason: "The body property 'title' is required",
+			Field:  "title",
 		}))
 		return
 	}
 
 	if payload.Description == nil {
-		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.RequestBodyError{
-			{
-				Detail:  "The body property 'description' is required",
-				Pointer: "#/description",
-			},
+		c.Error(apperr.MissingBodyError(apperr.ErrorField{
+			Reason: "The body property 'description' is required",
+			Field:  "description",
 		}))
 		return
 	}
 
 	if *payload.Title == "" {
-		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.RequestBodyError{
-			{
-				Detail:  "Body property 'title' can't be empty",
-				Pointer: "#/title",
-			},
+		c.Error(apperr.InvalidBodyError(apperr.ErrorField{
+			Reason: "Body property 'title' can't be empty",
+			Field:  "title",
 		}))
 		return
 	}
 
 	if *payload.Description == "" {
-		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.RequestBodyError{
-			{
-				Detail:  "Body property 'description' can't be empty",
-				Pointer: "#/description",
-			},
+		c.Error(apperr.InvalidBodyError(apperr.ErrorField{
+			Reason: "Body property 'description' can't be empty",
+			Field:  "description",
 		}))
 		return
 	}
@@ -100,31 +92,25 @@ func EditTask(c *gin.Context) {
 	}
 
 	if payload.Title == nil && payload.Description == nil {
-		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.RequestBodyError{
-			{
-				Detail:  "Atleast one body property 'title' or 'description' is required",
-				Pointer: "#/title, #/description",
-			},
+		c.Error(apperr.InvalidBodyError(apperr.ErrorField{
+			Reason: "Atleast one body property 'title' or 'description' is required",
+			Field:  "title, description",
 		}))
 		return
 	}
 
 	if payload.Title != nil && *payload.Title == "" {
-		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.RequestBodyError{
-			{
-				Detail:  "Body property 'title' can't be empty",
-				Pointer: "#/title",
-			},
+		c.Error(apperr.InvalidBodyError(apperr.ErrorField{
+			Reason: "Body property 'title' can't be empty",
+			Field:  "title",
 		}))
 		return
 	}
 
 	if payload.Description != nil && *payload.Description == "" {
-		c.Error(clienterror.NewInvalidBodyValueError(nil, []clienterror.RequestBodyError{
-			{
-				Detail:  "Body property 'description' can't be empty",
-				Pointer: "#/description",
-			},
+		c.Error(apperr.InvalidBodyError(apperr.ErrorField{
+			Reason: "Body property 'description' can't be empty",
+			Field:  "description",
 		}))
 		return
 	}
@@ -135,7 +121,7 @@ func EditTask(c *gin.Context) {
 		Completed:   nil,
 	})
 	if !ok {
-		c.Error(clienterror.NewNotFoundError(nil))
+		c.Error(apperr.NotFoundError())
 		return
 	}
 
@@ -152,11 +138,9 @@ func MarkTask(c *gin.Context) {
 	}
 
 	if payload.Completed == nil {
-		c.Error(clienterror.NewMissingBodyProperyError(nil, []clienterror.RequestBodyError{
-			{
-				Detail:  "Body property 'completed' is required",
-				Pointer: "#/completed",
-			},
+		c.Error(apperr.MissingBodyError(apperr.ErrorField{
+			Reason: "Body property 'completed' is required",
+			Field:  "completed",
 		}))
 		return
 	}
@@ -167,7 +151,7 @@ func MarkTask(c *gin.Context) {
 		Completed:   payload.Completed,
 	})
 	if !ok {
-		c.Error(clienterror.NewNotFoundError(nil))
+		c.Error(apperr.NotFoundError())
 		return
 	}
 
@@ -178,7 +162,7 @@ func DeleteTask(c *gin.Context) {
 	var id = c.Param("id")
 	task, ok := storage.DeleteTask(id)
 	if !ok {
-		c.Error(clienterror.NewNotFoundError(nil))
+		c.Error(apperr.NotFoundError())
 		return
 	}
 
@@ -189,11 +173,9 @@ func SearchTask(c *gin.Context) {
 	var query string = c.Query("q")
 
 	if query == "" {
-		c.Error(clienterror.NewInvalidRequestParamError(nil, []clienterror.RequestParamError{
-			{
-				Detail:    "Search query can't be empty",
-				Parameter: "q",
-			},
+		c.Error(apperr.InvalidRequestParamError(apperr.ErrorField{
+			Reason: "Search query can't be empty",
+			Field:  "q",
 		}))
 		return
 	}
