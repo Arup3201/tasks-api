@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/Arup3201/gotasks/internal/handlers/clienterror"
+	"github.com/Arup3201/gotasks/internal/handlers/apperr"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,7 +15,7 @@ func HandleErrors() gin.HandlerFunc {
 		if len(c.Errors) > 0 {
 			err := c.Errors.Last().Err
 
-			clientError, ok := err.(clienterror.ClientError)
+			clientError, ok := err.(apperr.ClientError)
 			if !ok {
 				c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "An unexpected error occured"})
 				return
