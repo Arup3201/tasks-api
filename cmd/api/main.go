@@ -1,7 +1,10 @@
 package main
 
 import (
+	"log"
+
 	"github.com/Arup3201/gotasks/internal/handlers"
+	"github.com/Arup3201/gotasks/internal/storage"
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,13 +15,17 @@ func main() {
 
 	router.Use(handlers.HandleErrors())
 
-	router.GET("/tasks", handlers.GetAllTasks)
-	router.POST("/tasks", handlers.AddTask)
-	router.GET("/tasks/:id", handlers.GetTaskWithId)
-	router.PUT("/tasks/:id", handlers.EditTask)
-	router.PUT("/tasks/:id/mark", handlers.MarkTask)
-	router.DELETE("/tasks/:id", handlers.DeleteTask)
-	router.GET("/search/tasks", handlers.SearchTask)
-
+	db, err := storage.NewPostgres()
+	if err != nil {
+		log.Fatalf("storage.NewPostgres error: %v", err)
+	}
+	taskHandler := handlers.NewTaskHandler(db)
+	router.GET("/tasks", taskHandler.GetAllTasks)
+	router.POST("/tasks", taskHandler.AddTask)
+	router.GET("/tasks/:id", taskHandler.GetTaskWithId)
+	router.PUT("/tasks/:id", taskHandler.EditTask)
+	router.PUT("/tasks/:id/mark", taskHandler.MarkTask)
+	router.DELETE("/tasks/:id", taskHandler.DeleteTask)
+	router.GET("/search/tasks", taskHandler.SearchTask)
 	router.Run("localhost:8080")
 }
