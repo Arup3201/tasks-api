@@ -144,7 +144,7 @@ func (p *Postgres) Search(by models.FieldName, query string) ([]models.Task, err
 }
 
 func NewPostgres() (*Postgres, error) {
-	db, err := sql.Open("postgres", "postgres://postgres:1234@localhost/gotasks?sslmode=disable")
+	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", utils.Config.DBUser, utils.Config.DBPass, utils.Config.DBHost, utils.Config.DBName))
 	if err != nil {
 		return nil, fmt.Errorf("NewPostgres failed to open database: %v", err)
 	}
