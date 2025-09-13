@@ -5,12 +5,13 @@ import (
 
 	"github.com/Arup3201/gotasks/internal/handlers"
 	"github.com/Arup3201/gotasks/internal/storage"
+	"github.com/Arup3201/gotasks/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
-const PORT = ":8000"
-
 func main() {
+	utils.Config.Configure()
+
 	router := gin.Default()
 
 	router.Use(handlers.HandleErrors())
@@ -27,5 +28,5 @@ func main() {
 	router.PUT("/tasks/:id/mark", taskHandler.MarkTask)
 	router.DELETE("/tasks/:id", taskHandler.DeleteTask)
 	router.GET("/search/tasks", taskHandler.SearchTask)
-	router.Run("localhost:8080")
+	router.Run("localhost:" + utils.Config.Port)
 }

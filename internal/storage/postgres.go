@@ -8,7 +8,7 @@ import (
 
 	"github.com/Arup3201/gotasks/internal/handlers/apperr"
 	"github.com/Arup3201/gotasks/internal/models"
-	"github.com/Arup3201/gotasks/internal/utils"
+	. "github.com/Arup3201/gotasks/internal/utils"
 	_ "github.com/lib/pq"
 )
 
@@ -30,7 +30,7 @@ func (p *Postgres) Get(id string) (models.Task, error) {
 	return task, nil
 }
 func (p *Postgres) Insert(title, description string) (string, error) {
-	taskId := utils.GenerateID("TASK_")
+	taskId := GenerateID("TASK_")
 	result, err := p.db.Exec("INSERT INTO tasks (id, title, description, completed, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)", taskId, title, description, false, time.Now(), time.Now())
 	if err != nil {
 		return "", fmt.Errorf("Postgres.Insert: %v", err)
@@ -144,7 +144,7 @@ func (p *Postgres) Search(by models.FieldName, query string) ([]models.Task, err
 }
 
 func NewPostgres() (*Postgres, error) {
-	db, err := sql.Open("postgres", "postgres://postgres:1234@localhost/gotasks?sslmode=disable")
+	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", Config.DBUser, Config.DBPass, Config.DBHost, Config.DBName))
 	if err != nil {
 		return nil, fmt.Errorf("NewPostgres failed to open database: %v", err)
 	}
