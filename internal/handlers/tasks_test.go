@@ -198,4 +198,50 @@ func TestAddTask(t *testing.T) {
 			t.Errorf("response status is wrong, expected %d but got %d", want, got)
 		}
 	})
+	t.Run("add task with missing title", func(t *testing.T) {
+		mock := &MockStorage{}
+		tHandler := NewTaskHandler(mock)
+		router := getTestRouter(t)
+		router.POST("/tasks", tHandler.AddTask)
+		description := "Added desc"
+		task := models.CreateTask{
+			Description: &description,
+		}
+		marshalled, err := json.Marshal(task)
+		if err != nil {
+			t.Fatalf("marshalling failed with error: %v", err)
+		}
+		request, _ := http.NewRequest("POST", "/tasks", bytes.NewReader(marshalled))
+		response := httptest.NewRecorder()
+
+		router.ServeHTTP(response, request)
+
+		want := 400
+		if got := response.Result().StatusCode; got != want {
+			t.Errorf("response status is wrong, expected %d but got %d", want, got)
+		}
+	})
+	t.Run("add task with missing description", func(t *testing.T) {
+		mock := &MockStorage{}
+		tHandler := NewTaskHandler(mock)
+		router := getTestRouter(t)
+		router.POST("/tasks", tHandler.AddTask)
+		title := "Task adding"
+		task := models.CreateTask{
+			Title: &title,
+		}
+		marshalled, err := json.Marshal(task)
+		if err != nil {
+			t.Fatalf("marshalling failed with error: %v", err)
+		}
+		request, _ := http.NewRequest("POST", "/tasks", bytes.NewReader(marshalled))
+		response := httptest.NewRecorder()
+
+		router.ServeHTTP(response, request)
+
+		want := 400
+		if got := response.Result().StatusCode; got != want {
+			t.Errorf("response status is wrong, expected %d but got %d", want, got)
+		}
+	})
 }
