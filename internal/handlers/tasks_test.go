@@ -482,3 +482,161 @@ func TestEditTask(t *testing.T) {
 		}
 	})
 }
+
+func TestMarkTask(t *testing.T) {
+	t.Run("mark task as done with valid payload", func(t *testing.T) {
+		mock := NewMockStorage(map[string]models.Task{
+			"1": {
+				Id:          "1",
+				Title:       "Task 1",
+				Description: "No description",
+				Completed:   false,
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
+			},
+		})
+		tHandler := NewTaskHandler(mock)
+		router := getTestRouter(t)
+		router.PUT("/tasks/:id", tHandler.MarkTask)
+		completed := true
+		payload := models.MarkTask{
+			Completed: &completed,
+		}
+		marshalled, err := json.Marshal(payload)
+		if err != nil {
+			t.Fatalf("marshalling failed with error: %v", err)
+		}
+		request, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewReader(marshalled))
+		response := httptest.NewRecorder()
+
+		router.ServeHTTP(response, request)
+
+		want := 200
+		if got := response.Result().StatusCode; got != want {
+			t.Log(response.Body.String())
+			t.Errorf("response status is wrong, expected %d but got %d", want, got)
+		}
+	})
+	t.Run("mark task as not done with valid payload", func(t *testing.T) {
+		mock := NewMockStorage(map[string]models.Task{
+			"1": {
+				Id:          "1",
+				Title:       "Task 1",
+				Description: "No description",
+				Completed:   true,
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
+			},
+		})
+		tHandler := NewTaskHandler(mock)
+		router := getTestRouter(t)
+		router.PUT("/tasks/:id", tHandler.MarkTask)
+		completed := false
+		payload := models.MarkTask{
+			Completed: &completed,
+		}
+		marshalled, err := json.Marshal(payload)
+		if err != nil {
+			t.Fatalf("marshalling failed with error: %v", err)
+		}
+		request, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewReader(marshalled))
+		response := httptest.NewRecorder()
+
+		router.ServeHTTP(response, request)
+
+		want := 200
+		if got := response.Result().StatusCode; got != want {
+			t.Log(response.Body.String())
+			t.Errorf("response status is wrong, expected %d but got %d", want, got)
+		}
+	})
+	t.Run("mark task with invalid payload", func(t *testing.T) {
+		mock := NewMockStorage(map[string]models.Task{
+			"1": {
+				Id:          "1",
+				Title:       "Task 1",
+				Description: "No description",
+				Completed:   true,
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
+			},
+		})
+		tHandler := NewTaskHandler(mock)
+		router := getTestRouter(t)
+		router.PUT("/tasks/:id", tHandler.MarkTask)
+		payload := models.MarkTask{}
+		marshalled, err := json.Marshal(payload)
+		if err != nil {
+			t.Fatalf("marshalling failed with error: %v", err)
+		}
+		request, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewReader(marshalled))
+		response := httptest.NewRecorder()
+
+		router.ServeHTTP(response, request)
+
+		want := 400
+		if got := response.Result().StatusCode; got != want {
+			t.Errorf("response status is wrong, expected %d but got %d", want, got)
+		}
+	})
+	t.Run("mark task with invalid id", func(t *testing.T) {
+		mock := NewMockStorage(map[string]models.Task{
+			"1": {
+				Id:          "1",
+				Title:       "Task 1",
+				Description: "No description",
+				Completed:   true,
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
+			},
+		})
+		tHandler := NewTaskHandler(mock)
+		router := getTestRouter(t)
+		router.PUT("/tasks/:id", tHandler.MarkTask)
+		completed := false
+		payload := models.MarkTask{
+			Completed: &completed,
+		}
+		marshalled, err := json.Marshal(payload)
+		if err != nil {
+			t.Fatalf("marshalling failed with error: %v", err)
+		}
+		request, _ := http.NewRequest("PUT", "/tasks/2", bytes.NewReader(marshalled))
+		response := httptest.NewRecorder()
+
+		router.ServeHTTP(response, request)
+
+		want := 404
+		if got := response.Result().StatusCode; got != want {
+			t.Errorf("response status is wrong, expected %d but got %d", want, got)
+		}
+	})
+}
+
+func TestSearchTask(t *testing.T) {
+	t.Run("search task with title golang", func(t *testing.T) {
+		mock := NewMockStorage(map[string]models.Task{
+			"1": {
+				Id:          "1",
+				Title:       "Learning Golang",
+				Description: "No description",
+				Completed:   true,
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
+			},
+		})
+		tHandler := NewTaskHandler(mock)
+		router := getTestRouter(t)
+		router.GET("/search/tasks", tHandler.SearchTask)
+		request, _ := http.NewRequest("GET", "/search/tasks?q=golang", nil)
+		response := httptest.NewRecorder()
+
+		router.ServeHTTP(response, request)
+
+		want := 200
+		if got := response.Result().StatusCode; got != want {
+			t.Log(response.Body.String())
+			t.Errorf("response status is wrong, expected %d but got %d", want, got)
+		}
+	})
+}
