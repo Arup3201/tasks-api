@@ -17,6 +17,7 @@ func HandleErrors() gin.HandlerFunc {
 
 			errorResponder, ok := err.(apperr.ErrorResponder)
 			if !ok {
+				log.Printf("Internal server error: %v", err)
 				c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "An unexpected error occured"})
 				return
 			}
