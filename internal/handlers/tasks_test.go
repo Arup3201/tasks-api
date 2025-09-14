@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -166,6 +167,34 @@ func TestGetTaskWithId(t *testing.T) {
 
 		want := 404
 		if got := response.Result().StatusCode; got != want {
+			t.Errorf("response status is wrong, expected %d but got %d", want, got)
+		}
+	})
+}
+
+func TestAddTask(t *testing.T) {
+	t.Run("add task with valid payload", func(t *testing.T) {
+		mock := &MockStorage{}
+		tHandler := NewTaskHandler(mock)
+		router := getTestRouter(t)
+		router.POST("/tasks", tHandler.AddTask)
+		title, description := "Task adding", "Added desc"
+		task := models.CreateTask{
+			Title:       &title,
+			Description: &description,
+		}
+		marshalled, err := json.Marshal(task)
+		if err != nil {
+			t.Fatalf("marshalling failed with error: %v", err)
+		}
+		request, _ := http.NewRequest("POST", "/tasks", bytes.NewReader(marshalled))
+		response := httptest.NewRecorder()
+
+		router.ServeHTTP(response, request)
+
+		want := 201
+		if got := response.Result().StatusCode; got != want {
+			t.Log(response.Body.String())
 			t.Errorf("response status is wrong, expected %d but got %d", want, got)
 		}
 	})
