@@ -39,7 +39,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TaskPayload'
+              $ref: '#/components/schemas/CreateTaskPayload'
       responses:
         '201':
           description: Returns created task ID
@@ -115,7 +115,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TaskPayload'
+              $ref: '#/components/schemas/UpdateTaskPayload'
       responses:
         '200':
           description: Updated task response
@@ -200,7 +200,14 @@ components:
         updated_at:
           type: string
       description: a single task structure
-    TaskPayload:
+    CreateTaskPayload:
+      type: object
+      properties:
+        title: 
+          type: string
+        description:
+          type: string
+    UpdateTaskPayload:
       type: object
       properties:
         title: 
