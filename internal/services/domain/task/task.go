@@ -37,11 +37,11 @@ func (ts TaskService) CreateTask(title, description string) (task.Task, error) {
 	return task, nil
 }
 
-func (ts TaskService) GetTask(taskId string) (task.Task, error) {
+func (ts TaskService) GetTask(taskId string) (*task.Task, error) {
 	task := ts.taskRepository.Get(taskId)
 	if task == nil {
-		return *task, errors.NotFoundError(fmt.Sprintf("Task with ID '%s' not found", taskId))
+		return nil, errors.NotFoundError(fmt.Sprintf("Task with ID '%s' not found", taskId))
 	}
 
-	return *task, nil
+	return task, nil
 }
