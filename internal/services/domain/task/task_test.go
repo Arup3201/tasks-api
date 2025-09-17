@@ -2,6 +2,7 @@ package task
 
 import (
 	"testing"
+	"time"
 
 	"github.com/Arup3201/gotasks/internal/services/errors"
 )
@@ -145,6 +146,104 @@ func TestGetTask(t *testing.T) {
 
 		if task.Title != title {
 			t.Errorf("Task title does not match, expected %s but got %s", title, task.Title)
+		}
+	})
+}
+
+func TestUpdateTask(t *testing.T) {
+	t.Run("update task updates correct task", func(t *testing.T) {
+		title := "Test task"
+		description := "Test task description"
+		ts := NewTaskService(NewMockTaskRepository())
+		created, _ := ts.CreateTask(title, description)
+		updated_title := "Test task (updated)"
+
+		updated, _ := ts.UpdateTask(created.Id, UpdateTaskData{
+			title: &updated_title,
+		})
+
+		if updated.Id != created.Id {
+			t.Errorf("wrong updated task expected %s but got %s", created.Id, updated.Id)
+		}
+	})
+	t.Run("update task updates title", func(t *testing.T) {
+		title := "Test task"
+		description := "Test task description"
+		ts := NewTaskService(NewMockTaskRepository())
+		created, _ := ts.CreateTask(title, description)
+		updated_title := "Test task (updated)"
+
+		updated, _ := ts.UpdateTask(created.Id, UpdateTaskData{
+			title: &updated_title,
+		})
+
+		if updated.Title != updated_title {
+			t.Errorf("updated task title expected %s but got %s", updated_title, updated.Title)
+		}
+	})
+	t.Run("update task updates description", func(t *testing.T) {
+		title := "Test task"
+		description := "Test task description"
+		ts := NewTaskService(NewMockTaskRepository())
+		created, _ := ts.CreateTask(title, description)
+		updated_description := "Test task description (updated)"
+
+		updated, _ := ts.UpdateTask(created.Id, UpdateTaskData{
+			description: &updated_description,
+		})
+
+		if updated.Description != updated_description {
+			t.Errorf("updated task description expected %s but got %s", updated_description, updated.Description)
+		}
+	})
+	t.Run("update task updates is_completed", func(t *testing.T) {
+		title := "Test task"
+		description := "Test task description"
+		ts := NewTaskService(NewMockTaskRepository())
+		created, _ := ts.CreateTask(title, description)
+		isCompleted := true
+
+		updated, _ := ts.UpdateTask(created.Id, UpdateTaskData{
+			isCompleted: &isCompleted,
+		})
+
+		if updated.IsCompleted != isCompleted {
+			t.Errorf("updated task is_completed expected %t but got %t", isCompleted, updated.IsCompleted)
+		}
+	})
+	t.Run("update task updates updated_at value", func(t *testing.T) {
+		title := "Test task"
+		description := "Test task description"
+		ts := NewTaskService(NewMockTaskRepository())
+		created, _ := ts.CreateTask(title, description)
+		time.Sleep(1000 * 2) // 2 secs
+		updated_title := "Test task (updated)"
+
+		updated, _ := ts.UpdateTask(created.Id, UpdateTaskData{
+			title: &updated_title,
+		})
+
+		if updated.UpdatedAt.IsZero() {
+			t.Errorf("update task updated_at is zero")
+		}
+		if updated.UpdatedAt.Equal(created.UpdatedAt) {
+			t.Errorf("update task updated_at did not change, got %v same as when created %v", created.UpdatedAt, updated.UpdatedAt)
+		}
+	})
+	t.Run("update task persists the update", func(t *testing.T) {
+		title := "Test task"
+		description := "Test task description"
+		ts := NewTaskService(NewMockTaskRepository())
+		created, _ := ts.CreateTask(title, description)
+		updated_title := "Test task (updated)"
+		updated, _ := ts.UpdateTask(created.Id, UpdateTaskData{
+			title: &updated_title,
+		})
+
+		task, _ := ts.GetTask(created.Id)
+
+		if task.Title != updated.Title {
+			t.Errorf("task update did not persist, expected %s but got %s", updated.Title, task.Title)
 		}
 	})
 }

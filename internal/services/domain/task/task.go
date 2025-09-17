@@ -3,11 +3,18 @@ package task
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Arup3201/gotasks/internal/entities/task"
 	"github.com/Arup3201/gotasks/internal/services/errors"
 	"github.com/Arup3201/gotasks/internal/storages"
 )
+
+type UpdateTaskData struct {
+	title       *string
+	description *string
+	isCompleted *bool
+}
 
 type TaskService struct {
 	taskRepository storages.TaskRepository
@@ -41,6 +48,25 @@ func (ts TaskService) GetTask(taskId string) (*task.Task, error) {
 	task := ts.taskRepository.Get(taskId)
 	if task == nil {
 		return nil, errors.NotFoundError(fmt.Sprintf("Task with ID '%s' not found", taskId))
+	}
+
+	return task, nil
+}
+
+func (ts TaskService) UpdateTask(taskId string, data UpdateTaskData) (task.Task, error) {
+	var task task.Task
+	if data.title != nil {
+		task, err := ts.taskRepository.Update(*data.title)
+	}
+
+	if data.description != nil {
+		task, err := ts.taskRepository.Update(*data.title)
+
+	}
+
+	if data.isCompleted != nil {
+		task.IsCompleted = *data.isCompleted
+		task.UpdatedAt = time.Now()
 	}
 
 	return task, nil
