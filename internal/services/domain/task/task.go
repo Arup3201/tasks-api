@@ -3,7 +3,6 @@ package task
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/Arup3201/gotasks/internal/entities/task"
 	"github.com/Arup3201/gotasks/internal/services/errors"
@@ -26,19 +25,19 @@ func NewTaskService(repo storages.TaskRepository) *TaskService {
 	}
 }
 
-func (ts TaskService) CreateTask(title, description string) (task.Task, error) {
+func (ts TaskService) CreateTask(title, description string) (*task.Task, error) {
 	if strings.TrimSpace(title) == "" {
-		return task.Task{}, errors.InputValidationError("Invalid task 'title'", "Task property 'title' can't be empty")
+		return nil, errors.InputValidationError("Invalid task 'title'", "Task property 'title' can't be empty")
 	}
 
 	if strings.TrimSpace(description) == "" {
-		return task.Task{}, errors.InputValidationError("Invalid task 'description'", "Task property 'description' can't be empty")
+		return nil, errors.InputValidationError("Invalid task 'description'", "Task property 'description' can't be empty")
 	}
 
 	task, err := ts.taskRepository.Insert(title, description)
 
 	if err != nil {
-		return task, err
+		return nil, err
 	}
 
 	return task, nil
@@ -53,20 +52,24 @@ func (ts TaskService) GetTask(taskId string) (*task.Task, error) {
 	return task, nil
 }
 
-func (ts TaskService) UpdateTask(taskId string, data UpdateTaskData) (task.Task, error) {
-	var task task.Task
+func (ts TaskService) UpdateTask(taskId string, data UpdateTaskData) (*task.Task, error) {
+	update := map[string]any{}
+
 	if data.title != nil {
-		task, err := ts.taskRepository.Update(*data.title)
+		update["Title"] = *data.title
 	}
 
 	if data.description != nil {
-		task, err := ts.taskRepository.Update(*data.title)
-
+		update["Description"] = *data.description
 	}
 
 	if data.isCompleted != nil {
-		task.IsCompleted = *data.isCompleted
-		task.UpdatedAt = time.Now()
+		update["IsCompleted"] = *data.isCompleted
+	}
+
+	task := ts.taskRepository.Update(taskId, update)
+	if task == nil {
+		return nil, errors.NotFoundError(fmt.Sprintf("Task with ID '%s' not found", taskId))
 	}
 
 	return task, nil

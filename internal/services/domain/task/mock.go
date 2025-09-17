@@ -1,6 +1,7 @@
 package task
 
 import (
+	"reflect"
 	"time"
 
 	"github.com/Arup3201/gotasks/internal/entities/task"
@@ -29,7 +30,7 @@ func (tr *mockTaskRepository) Get(taskId string) *task.Task {
 	return nil
 }
 
-func (tr *mockTaskRepository) Insert(title, description string) (task.Task, error) {
+func (tr *mockTaskRepository) Insert(title, description string) (*task.Task, error) {
 	task := task.Task{
 		Id:          uuid.New().String(),
 		Title:       title,
@@ -39,5 +40,27 @@ func (tr *mockTaskRepository) Insert(title, description string) (task.Task, erro
 		UpdatedAt:   time.Now(),
 	}
 	tr.tasks = append(tr.tasks, task)
-	return task, nil
+	return &task, nil
+}
+
+func (tr *mockTaskRepository) Update(taskId string, data map[string]any) *task.Task {
+	for i, task := range tr.tasks {
+		if task.Id == taskId {
+			t := reflect.ValueOf(&task).Elem()
+			for f, v := range data {
+				field := t.FieldByName(f)
+				value := reflect.ValueOf(v)
+				if field.Kind() == reflect.String {
+					field.SetString(value.String())
+				} else if field.Kind() == reflect.Bool {
+					field.SetBool(value.Bool())
+				}
+			}
+			task.UpdatedAt = time.Now()
+			tr.tasks[i] = task
+			return &task
+		}
+	}
+
+	return nil
 }

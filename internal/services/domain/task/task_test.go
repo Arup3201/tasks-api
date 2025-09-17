@@ -162,7 +162,10 @@ func TestUpdateTask(t *testing.T) {
 			title: &updated_title,
 		})
 
-		if updated.Id != created.Id {
+		if updated == nil {
+			t.Errorf("updated response is nil")
+		}
+		if updated != nil && updated.Id != created.Id {
 			t.Errorf("wrong updated task expected %s but got %s", created.Id, updated.Id)
 		}
 	})
