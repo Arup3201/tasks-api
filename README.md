@@ -1,4 +1,6 @@
-# Task Tracker
+# Task API
+
+[OpenAPI specification](https://app.swaggerhub.com/apis-docs/ARUPJANA7365_1/tasks-api/1.0.0)
 
 ## Set up
 

@@ -1,0 +1,283 @@
+openapi: 3.0.0
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: Tasks API
+    url: https://virtserver.swaggerhub.com/ARUPJANA7365_1/tasks-api/1.0.0
+info:
+  version: "1.0.0"
+  title: tasks-api
+  description: The API for the tracking tasks in your local machine
+paths:
+  /tasks:
+    get:
+      tags: 
+        - Tasks
+      description: Returns all tasks
+      operationId: getTasks
+      responses:
+        '200':
+          description: All tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                    $ref: '#/components/schemas/TaskSummary'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+    post:
+      tags:
+        - Tasks
+      description: Add a new task
+      operationId: createTask
+      requestBody:
+        description: Task payload for creating task
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskPayload'
+      responses:
+        '201':
+          description: Returns created task ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedTaskResponse'
+        '400':
+          description: Missing payload property
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/PayloadError'
+        '422':
+          description: Payload validation failed
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/PayloadError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+  
+  /tasks/{id}:
+    get:
+      tags:
+        - Tasks
+      description: Get a single task with specific ID
+      operationId: getTaskWithID
+      parameters:
+        - in: path
+          name: id
+          description: Task ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskSummary'
+        '404':
+          description: Task not found
+          content: 
+            application/problem+json:
+              schema: 
+                $ref: '#/components/schemas/NotFoundError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+    patch:
+      tags:
+        - Tasks
+      description: Edit a task with ID
+      operationId: editTask
+      parameters:
+        - in: path
+          name: id
+          description: Task ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Task payload for update
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskPayload'
+      responses:
+        '200':
+          description: Updated task response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskSummary'
+        '400':
+          description: Empty payload
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/PayloadError'
+        '404':
+          description: Task not found
+          content: 
+            application/problem+json:
+              schema: 
+                $ref: '#/components/schemas/NotFoundError'
+        '422':
+          description: Payload validation failed
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/PayloadError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+  
+  /search/tasks:
+    get:
+      tags:
+        - Tasks
+      description: Search tasks using title
+      operationId: searchTasks
+      parameters:
+        - in: query
+          name: q
+          description: Query string to search tasks
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tasks with matching title
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskSummary'
+        '400':
+          description: Search query `q` is missing
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ParameterError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+    
+components:
+  schemas:
+    TaskSummary:
+      type: object
+      properties:
+        id: 
+          type: string
+        title: 
+          type: string
+        description:
+          type: string
+        is_completed:
+          type: boolean
+        created_at: 
+          type: string
+        updated_at:
+          type: string
+      description: a single task structure
+    TaskPayload:
+      type: object
+      properties:
+        title: 
+          type: string
+        description:
+          type: string
+        is_completed:
+          type: boolean
+    CreatedTaskResponse:
+      type: object
+      properties: 
+        id: 
+          type: string
+    Field:
+      type: object
+      properties:
+        name:
+          type: string
+        detail:
+          type: string
+    ParameterError:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        detail: 
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
+        fields:
+          type: array
+          items:
+              $ref: '#/components/schemas/Field'
+    PayloadError:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        detail: 
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
+        fields:
+          type: array
+          items:
+              $ref: '#/components/schemas/Field'
+    NotFoundError:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        detail: 
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
+    ServerError:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        detail: 
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
