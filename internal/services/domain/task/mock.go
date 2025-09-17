@@ -64,3 +64,7 @@ func (tr *mockTaskRepository) Update(taskId string, data map[string]any) *task.T
 
 	return nil
 }
+
+func (tr *mockTaskRepository) List() []task.Task {
+	return tr.tasks
+}

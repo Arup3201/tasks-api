@@ -74,3 +74,23 @@ func (ts TaskService) UpdateTask(taskId string, data UpdateTaskData) (*task.Task
 
 	return task, nil
 }
+
+func (ts TaskService) SearchTasks(query string) []task.Task {
+	allTasks := ts.taskRepository.List()
+
+	matches := []task.Task{}
+	contains := false
+	for _, task := range allTasks {
+		contains = true
+		for part := range strings.SplitSeq(query, " ") {
+			if !strings.Contains(strings.ToLower(task.Title), strings.ToLower(part)) {
+				contains = false
+			}
+		}
+		if contains {
+			matches = append(matches, task)
+		}
+	}
+
+	return matches
+}

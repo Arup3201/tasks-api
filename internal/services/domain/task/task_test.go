@@ -250,3 +250,181 @@ func TestUpdateTask(t *testing.T) {
 		}
 	})
 }
+
+func TestSearchTasks(t *testing.T) {
+	t.Run("Search tasks with match", func(t *testing.T) {
+		tasks := []struct {
+			title       string
+			description string
+		}{
+			{
+				title:       "Learn Golang",
+				description: "Learn reflect concept in Golang",
+			},
+			{
+				title:       "Learn Python",
+				description: "Learn dict concept in Python",
+			},
+			{
+				title:       "Play Football",
+				description: "2 Hrs football time at evening",
+			},
+			{
+				title:       "Play Basketball",
+				description: "1 Hr basketball time at evening",
+			},
+		}
+		ts := NewTaskService(NewMockTaskRepository())
+		for _, task := range tasks {
+			ts.CreateTask(task.title, task.description)
+		}
+		query := "learn"
+
+		results := ts.SearchTasks(query)
+
+		want := 2
+		if got := len(results); got != want {
+			t.Errorf("expected searched results %d but got %d", want, got)
+		}
+	})
+	t.Run("Search tasks with no match", func(t *testing.T) {
+		tasks := []struct {
+			title       string
+			description string
+		}{
+			{
+				title:       "Learn Golang",
+				description: "Learn reflect concept in Golang",
+			},
+			{
+				title:       "Learn Python",
+				description: "Learn dict concept in Python",
+			},
+			{
+				title:       "Play Football",
+				description: "2 Hrs football time at evening",
+			},
+			{
+				title:       "Play Basketball",
+				description: "1 Hr basketball time at evening",
+			},
+		}
+		ts := NewTaskService(NewMockTaskRepository())
+		for _, task := range tasks {
+			ts.CreateTask(task.title, task.description)
+		}
+		query := "nothing"
+
+		results := ts.SearchTasks(query)
+
+		want := 0
+		if got := len(results); got != want {
+			t.Errorf("expected searched results %d but got %d", want, got)
+		}
+	})
+	t.Run("Search tasks with multi word query", func(t *testing.T) {
+		tasks := []struct {
+			title       string
+			description string
+		}{
+			{
+				title:       "Learn DSA in Golang ",
+				description: "Learn reflect concept in Golang",
+			},
+			{
+				title:       "Learn REST API design in Python",
+				description: "Learn dict concept in Python",
+			},
+			{
+				title:       "Play Football for 2 hrs",
+				description: "2 Hrs football time at evening",
+			},
+			{
+				title:       "Play Basketball 1hr",
+				description: "1 Hr basketball time at evening",
+			},
+		}
+		ts := NewTaskService(NewMockTaskRepository())
+		for _, task := range tasks {
+			ts.CreateTask(task.title, task.description)
+		}
+		query := "learn golang"
+
+		results := ts.SearchTasks(query)
+
+		want := 1
+		if got := len(results); got != want {
+			t.Errorf("expected searched results %d but got %d", want, got)
+		}
+	})
+	t.Run("Search tasks with multi word query", func(t *testing.T) {
+		tasks := []struct {
+			title       string
+			description string
+		}{
+			{
+				title:       "Learn DSA in Go language",
+				description: "Learn reflect concept in Golang",
+			},
+			{
+				title:       "Learn REST API design in Python language",
+				description: "Learn dict concept in Python",
+			},
+			{
+				title:       "Play Football for 1 hr",
+				description: "1 Hr football at evening",
+			},
+			{
+				title:       "Play Basketball 1 hr",
+				description: "1 Hr basketball at evening",
+			},
+		}
+		ts := NewTaskService(NewMockTaskRepository())
+		for _, task := range tasks {
+			ts.CreateTask(task.title, task.description)
+		}
+		query := "learn language"
+
+		results := ts.SearchTasks(query)
+
+		want := 2
+		if got := len(results); got != want {
+			t.Errorf("expected searched results %d but got %d", want, got)
+		}
+	})
+	t.Run("Search tasks with multi word query", func(t *testing.T) {
+		tasks := []struct {
+			title       string
+			description string
+		}{
+			{
+				title:       "Learn DSA in Go language",
+				description: "Learn reflect concept in Golang",
+			},
+			{
+				title:       "Learn REST API design in Python language",
+				description: "Learn dict concept in Python",
+			},
+			{
+				title:       "Play Football for 2 hrs",
+				description: "1 Hr football at evening",
+			},
+			{
+				title:       "Play Basketball 1 hr",
+				description: "1 Hr basketball at evening",
+			},
+		}
+		ts := NewTaskService(NewMockTaskRepository())
+		for _, task := range tasks {
+			ts.CreateTask(task.title, task.description)
+		}
+		query := "play hr"
+
+		results := ts.SearchTasks(query)
+
+		want := 2 // tasks[2].title has 'hrs' which has 'hr' in it
+		if got := len(results); got != want {
+			t.Errorf("expected searched results %d but got %d", want, got)
+		}
+	})
+}
