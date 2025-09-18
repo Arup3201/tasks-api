@@ -7,6 +7,7 @@ import (
 	"github.com/Arup3201/gotasks/internal/entities/task"
 	"github.com/Arup3201/gotasks/internal/services/errors"
 	"github.com/Arup3201/gotasks/internal/storages"
+	"github.com/google/uuid"
 )
 
 type UpdateTaskData struct {
@@ -34,7 +35,8 @@ func (ts TaskService) CreateTask(title, description string) (*task.Task, error) 
 		return nil, errors.InputValidationError("Invalid task 'description'", "Task property 'description' can't be empty")
 	}
 
-	task, err := ts.taskRepository.Insert(title, description)
+	taskId := uuid.New().String()
+	task, err := ts.taskRepository.Insert(taskId, title, description)
 
 	if err != nil {
 		return nil, err
