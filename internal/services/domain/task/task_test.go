@@ -43,8 +43,8 @@ func TestAddTask(t *testing.T) {
 
 		got, _ := ts.CreateTask(title, description)
 
-		if got.Id == "" {
-			t.Errorf("expected non empty task ID")
+		if got.Id == 0 {
+			t.Errorf("expected non-zero task ID")
 		}
 	})
 	t.Run("Two tasks with different ID", func(t *testing.T) {
@@ -121,7 +121,7 @@ func TestGetTask(t *testing.T) {
 		task, _ := ts.GetTask(created.Id)
 
 		if task.Id != created.Id {
-			t.Errorf("Task ID does not match, expected %s but got %s", created.Id, task.Id)
+			t.Errorf("Task ID does not match, expected %d but got %d", created.Id, task.Id)
 		}
 	})
 	t.Run("Get task title is correct after creating - 1", func(t *testing.T) {
@@ -166,7 +166,7 @@ func TestUpdateTask(t *testing.T) {
 			t.Errorf("updated response is nil")
 		}
 		if updated != nil && updated.Id != created.Id {
-			t.Errorf("wrong updated task expected %s but got %s", created.Id, updated.Id)
+			t.Errorf("wrong updated task expected %d but got %d", created.Id, updated.Id)
 		}
 	})
 	t.Run("update task updates title", func(t *testing.T) {

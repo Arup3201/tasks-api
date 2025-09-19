@@ -19,7 +19,7 @@ func NewMockTaskRepository() *mockTaskRepository {
 	}
 }
 
-func (tr *mockTaskRepository) Get(taskId string) *task.Task {
+func (tr *mockTaskRepository) Get(taskId int) *task.Task {
 	for _, task := range tr.tasks {
 		if task.Id == taskId {
 			return &task
@@ -29,7 +29,7 @@ func (tr *mockTaskRepository) Get(taskId string) *task.Task {
 	return nil
 }
 
-func (tr *mockTaskRepository) Insert(id, title, description string) (*task.Task, error) {
+func (tr *mockTaskRepository) Insert(id int, title, description string) (*task.Task, error) {
 	task := task.Task{
 		Id:          id,
 		Title:       title,
@@ -42,7 +42,7 @@ func (tr *mockTaskRepository) Insert(id, title, description string) (*task.Task,
 	return &task, nil
 }
 
-func (tr *mockTaskRepository) Update(taskId string, data map[string]any) *task.Task {
+func (tr *mockTaskRepository) Update(taskId int, data map[string]any) *task.Task {
 	for i, task := range tr.tasks {
 		if task.Id == taskId {
 			t := reflect.ValueOf(&task).Elem()
