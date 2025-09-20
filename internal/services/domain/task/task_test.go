@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Arup3201/gotasks/internal/errors"
+	"github.com/Arup3201/gotasks/internal/services"
 )
 
 func TestAddTask(t *testing.T) {
@@ -158,8 +159,8 @@ func TestUpdateTask(t *testing.T) {
 		created, _ := ts.CreateTask(title, description)
 		updated_title := "Test task (updated)"
 
-		updated, _ := ts.UpdateTask(created.Id, UpdateTaskData{
-			title: &updated_title,
+		updated, _ := ts.UpdateTask(created.Id, services.UpdateTaskData{
+			Title: &updated_title,
 		})
 
 		if updated == nil {
@@ -176,8 +177,8 @@ func TestUpdateTask(t *testing.T) {
 		created, _ := ts.CreateTask(title, description)
 		updated_title := "Test task (updated)"
 
-		updated, _ := ts.UpdateTask(created.Id, UpdateTaskData{
-			title: &updated_title,
+		updated, _ := ts.UpdateTask(created.Id, services.UpdateTaskData{
+			Title: &updated_title,
 		})
 
 		if updated.Title != updated_title {
@@ -191,8 +192,8 @@ func TestUpdateTask(t *testing.T) {
 		created, _ := ts.CreateTask(title, description)
 		updated_description := "Test task description (updated)"
 
-		updated, _ := ts.UpdateTask(created.Id, UpdateTaskData{
-			description: &updated_description,
+		updated, _ := ts.UpdateTask(created.Id, services.UpdateTaskData{
+			Description: &updated_description,
 		})
 
 		if updated.Description != updated_description {
@@ -206,8 +207,8 @@ func TestUpdateTask(t *testing.T) {
 		created, _ := ts.CreateTask(title, description)
 		isCompleted := true
 
-		updated, _ := ts.UpdateTask(created.Id, UpdateTaskData{
-			isCompleted: &isCompleted,
+		updated, _ := ts.UpdateTask(created.Id, services.UpdateTaskData{
+			IsCompleted: &isCompleted,
 		})
 
 		if updated.IsCompleted != isCompleted {
@@ -222,8 +223,8 @@ func TestUpdateTask(t *testing.T) {
 		time.Sleep(1000 * 2) // 2 secs
 		updated_title := "Test task (updated)"
 
-		updated, _ := ts.UpdateTask(created.Id, UpdateTaskData{
-			title: &updated_title,
+		updated, _ := ts.UpdateTask(created.Id, services.UpdateTaskData{
+			Title: &updated_title,
 		})
 
 		if updated.UpdatedAt.IsZero() {
@@ -239,8 +240,8 @@ func TestUpdateTask(t *testing.T) {
 		ts := NewTaskService(NewMockTaskRepository())
 		created, _ := ts.CreateTask(title, description)
 		updated_title := "Test task (updated)"
-		updated, _ := ts.UpdateTask(created.Id, UpdateTaskData{
-			title: &updated_title,
+		updated, _ := ts.UpdateTask(created.Id, services.UpdateTaskData{
+			Title: &updated_title,
 		})
 
 		task, _ := ts.GetTask(created.Id)

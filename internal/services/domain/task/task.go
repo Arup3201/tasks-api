@@ -6,14 +6,9 @@ import (
 
 	"github.com/Arup3201/gotasks/internal/entities/task"
 	"github.com/Arup3201/gotasks/internal/errors"
+	"github.com/Arup3201/gotasks/internal/services"
 	"github.com/Arup3201/gotasks/internal/storages"
 )
-
-type UpdateTaskData struct {
-	title       *string
-	description *string
-	isCompleted *bool
-}
 
 type TaskService struct {
 	taskRepository storages.TaskRepository
@@ -57,19 +52,19 @@ func (ts *TaskService) GetTask(taskId int) (*task.Task, error) {
 	return task, nil
 }
 
-func (ts *TaskService) UpdateTask(taskId int, data UpdateTaskData) (*task.Task, error) {
+func (ts *TaskService) UpdateTask(taskId int, data services.UpdateTaskData) (*task.Task, error) {
 	update := map[string]any{}
 
-	if data.title != nil {
-		update["Title"] = *data.title
+	if data.Title != nil {
+		update["Title"] = *data.Title
 	}
 
-	if data.description != nil {
-		update["Description"] = *data.description
+	if data.Description != nil {
+		update["Description"] = *data.Description
 	}
 
-	if data.isCompleted != nil {
-		update["IsCompleted"] = *data.isCompleted
+	if data.IsCompleted != nil {
+		update["IsCompleted"] = *data.IsCompleted
 	}
 
 	task, err := ts.taskRepository.Update(taskId, update)
