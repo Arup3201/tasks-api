@@ -52,6 +52,15 @@ func (ts *TaskService) GetTask(taskId int) (*task.Task, error) {
 	return task, nil
 }
 
+func (ts *TaskService) GetAllTasks() ([]task.Task, error) {
+	tasks, err := ts.taskRepository.List()
+	if err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
+}
+
 func (ts *TaskService) UpdateTask(taskId int, data services.UpdateTaskData) (*task.Task, error) {
 	update := map[string]any{}
 

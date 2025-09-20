@@ -151,6 +151,46 @@ func TestGetTask(t *testing.T) {
 	})
 }
 
+func TestGetAllTasks(t *testing.T) {
+	t.Run("get all tasks", func(t *testing.T) {
+		cases := []struct {
+			title       string
+			description string
+		}{
+			{
+				title:       "Learn Golang",
+				description: "Learn reflect concept in Golang",
+			},
+			{
+				title:       "Learn Python",
+				description: "Learn dict concept in Python",
+			},
+			{
+				title:       "Play Football",
+				description: "2 Hrs football time at evening",
+			},
+			{
+				title:       "Play Basketball",
+				description: "1 Hr basketball time at evening",
+			},
+		}
+		ts := NewTaskService(NewMockTaskRepository())
+		for _, tc := range cases {
+			ts.CreateTask(tc.title, tc.description)
+		}
+
+		tasks, err := ts.GetAllTasks()
+
+		if err != nil {
+			t.Errorf("GetAllTasks error: %v", err)
+		}
+		want := 4
+		if got := len(tasks); got != want {
+			t.Errorf("expected %d tasks, but got %d", want, got)
+		}
+	})
+}
+
 func TestUpdateTask(t *testing.T) {
 	t.Run("update task updates correct task", func(t *testing.T) {
 		title := "Test task"
