@@ -150,3 +150,34 @@ func TestPgUpdate(t *testing.T) {
 		}
 	})
 }
+
+func TestPgList(t *testing.T) {
+	t.Run("list all tasks", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("sqlmock.New error: %v", err)
+		}
+		defer db.Close()
+		rows := sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(1, "Test task 1", "Test task 1 description", false, time.Now(), time.Now()).AddRow(2, "Test task 2", "Test task 2 description", true, time.Now(), time.Now()).AddRow(3, "Test task 3", "Test task 3 description", false, time.Now(), time.Now())
+		mock.ExpectQuery("^SELECT (.+) FROM tasks$").WillReturnRows(rows)
+		pg := NewPgTaskRepository(db)
+
+		tasks, err := pg.List()
+
+		if err != nil {
+			t.Errorf("error occured: %v", err)
+			return
+		}
+		if tasks == nil {
+			t.Errorf("expected list of tasks but got nothing")
+			return
+		}
+		if len(tasks) == 0 {
+			t.Errorf("expected list of tasks but got empty list")
+			return
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("there were unfulfilled expectations: %s", err)
+		}
+	})
+}

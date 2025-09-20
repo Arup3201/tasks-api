@@ -70,3 +70,20 @@ func (pg *PgTaskRepository) Update(taskId int, data map[string]any) (*task.Task,
 
 	return pg.Get(taskId)
 }
+
+func (pg *PgTaskRepository) List() ([]task.Task, error) {
+	var tasks []task.Task
+	rows, err := pg.db.Query("SELECT * FROM tasks")
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		t := &task.Task{}
+		if err := rows.Scan(&t.Id, &t.Title, &t.Description, &t.IsCompleted, &t.CreatedAt, &t.UpdatedAt); err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, *t)
+	}
+
+	return tasks, nil
+}
