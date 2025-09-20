@@ -1,10 +1,12 @@
 package task
 
 import (
+	"fmt"
 	"reflect"
 	"time"
 
 	"github.com/Arup3201/gotasks/internal/entities/task"
+	"github.com/Arup3201/gotasks/internal/errors"
 )
 
 /* Mock up of the task repository for test */
@@ -19,14 +21,14 @@ func NewMockTaskRepository() *mockTaskRepository {
 	}
 }
 
-func (tr *mockTaskRepository) Get(taskId int) *task.Task {
+func (tr *mockTaskRepository) Get(taskId int) (*task.Task, error) {
 	for _, task := range tr.tasks {
 		if task.Id == taskId {
-			return &task
+			return &task, nil
 		}
 	}
 
-	return nil
+	return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
 }
 
 func (tr *mockTaskRepository) Insert(id int, title, description string) (*task.Task, error) {
@@ -42,7 +44,7 @@ func (tr *mockTaskRepository) Insert(id int, title, description string) (*task.T
 	return &task, nil
 }
 
-func (tr *mockTaskRepository) Update(taskId int, data map[string]any) *task.Task {
+func (tr *mockTaskRepository) Update(taskId int, data map[string]any) (*task.Task, error) {
 	for i, task := range tr.tasks {
 		if task.Id == taskId {
 			t := reflect.ValueOf(&task).Elem()
@@ -57,13 +59,13 @@ func (tr *mockTaskRepository) Update(taskId int, data map[string]any) *task.Task
 			}
 			task.UpdatedAt = time.Now()
 			tr.tasks[i] = task
-			return &task
+			return &task, nil
 		}
 	}
 
-	return nil
+	return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
 }
 
-func (tr *mockTaskRepository) List() []task.Task {
-	return tr.tasks
+func (tr *mockTaskRepository) List() ([]task.Task, error) {
+	return tr.tasks, nil
 }

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/Arup3201/gotasks/internal/entities/task"
-	"github.com/Arup3201/gotasks/internal/services/errors"
+	"github.com/Arup3201/gotasks/internal/errors"
 	"github.com/Arup3201/gotasks/internal/storages"
 )
 
@@ -46,9 +46,12 @@ func (ts *TaskService) CreateTask(title, description string) (*task.Task, error)
 }
 
 func (ts *TaskService) GetTask(taskId int) (*task.Task, error) {
-	task := ts.taskRepository.Get(taskId)
+	task, err := ts.taskRepository.Get(taskId)
+	if err != nil {
+		return nil, err
+	}
 	if task == nil {
-		return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
+		return nil, err
 	}
 
 	return task, nil
@@ -69,7 +72,10 @@ func (ts *TaskService) UpdateTask(taskId int, data UpdateTaskData) (*task.Task, 
 		update["IsCompleted"] = *data.isCompleted
 	}
 
-	task := ts.taskRepository.Update(taskId, update)
+	task, err := ts.taskRepository.Update(taskId, update)
+	if err != nil {
+		return nil, err
+	}
 	if task == nil {
 		return nil, errors.NotFoundError(fmt.Sprintf("Task with ID '%d' not found", taskId))
 	}
@@ -77,8 +83,11 @@ func (ts *TaskService) UpdateTask(taskId int, data UpdateTaskData) (*task.Task, 
 	return task, nil
 }
 
-func (ts *TaskService) SearchTasks(query string) []task.Task {
-	allTasks := ts.taskRepository.List()
+func (ts *TaskService) SearchTasks(query string) ([]task.Task, error) {
+	allTasks, err := ts.taskRepository.List()
+	if err != nil {
+		return nil, err
+	}
 
 	matches := []task.Task{}
 	contains := false
@@ -94,5 +103,5 @@ func (ts *TaskService) SearchTasks(query string) []task.Task {
 		}
 	}
 
-	return matches
+	return matches, nil
 }

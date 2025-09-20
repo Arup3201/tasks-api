@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Arup3201/gotasks/internal/services/errors"
+	"github.com/Arup3201/gotasks/internal/errors"
 )
 
 func TestAddTask(t *testing.T) {
@@ -280,9 +280,13 @@ func TestSearchTasks(t *testing.T) {
 		}
 		query := "learn"
 
-		results := ts.SearchTasks(query)
+		results, err := ts.SearchTasks(query)
 
 		want := 2
+		if err != nil {
+			t.Errorf("Search failed: %v", err)
+			return
+		}
 		if got := len(results); got != want {
 			t.Errorf("expected searched results %d but got %d", want, got)
 		}
@@ -315,9 +319,13 @@ func TestSearchTasks(t *testing.T) {
 		}
 		query := "nothing"
 
-		results := ts.SearchTasks(query)
+		results, err := ts.SearchTasks(query)
 
 		want := 0
+		if err != nil {
+			t.Errorf("Search failed: %v", err)
+			return
+		}
 		if got := len(results); got != want {
 			t.Errorf("expected searched results %d but got %d", want, got)
 		}
@@ -350,9 +358,13 @@ func TestSearchTasks(t *testing.T) {
 		}
 		query := "learn golang"
 
-		results := ts.SearchTasks(query)
+		results, err := ts.SearchTasks(query)
 
 		want := 1
+		if err != nil {
+			t.Errorf("Search failed: %v", err)
+			return
+		}
 		if got := len(results); got != want {
 			t.Errorf("expected searched results %d but got %d", want, got)
 		}
@@ -385,9 +397,13 @@ func TestSearchTasks(t *testing.T) {
 		}
 		query := "learn language"
 
-		results := ts.SearchTasks(query)
+		results, err := ts.SearchTasks(query)
 
 		want := 2
+		if err != nil {
+			t.Errorf("Search failed: %v", err)
+			return
+		}
 		if got := len(results); got != want {
 			t.Errorf("expected searched results %d but got %d", want, got)
 		}
@@ -420,9 +436,13 @@ func TestSearchTasks(t *testing.T) {
 		}
 		query := "play hr"
 
-		results := ts.SearchTasks(query)
+		results, err := ts.SearchTasks(query)
 
 		want := 2 // tasks[2].title has 'hrs' which has 'hr' in it
+		if err != nil {
+			t.Errorf("Search failed: %v", err)
+			return
+		}
 		if got := len(results); got != want {
 			t.Errorf("expected searched results %d but got %d", want, got)
 		}
