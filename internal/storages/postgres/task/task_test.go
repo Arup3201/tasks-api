@@ -2,11 +2,11 @@ package task
 
 import (
 	"database/sql/driver"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/google/uuid"
 )
 
 type AnyTime struct{}
@@ -17,6 +17,53 @@ func (a AnyTime) Match(v driver.Value) bool {
 	return ok
 }
 
+func TestPgGet(t *testing.T) {
+	t.Run("should get task", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("sqlmock.New error: %v", err)
+		}
+		defer db.Close()
+		id, title, description := 1, "Test task", "Test task description"
+		rows := sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(id, title, description, false, time.Now(), time.Now())
+		mock.ExpectQuery("^SELECT (.+) FROM tasks").WithArgs(id).WillReturnRows(rows)
+		pg := NewPgTaskRepository(db)
+
+		task, err := pg.Get(id)
+
+		if err != nil {
+			t.Errorf("pg.Get error: %v", err)
+		}
+		if task.Id != id {
+			t.Errorf("expected task ID %d, but got %d", id, task.Id)
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("there were unfulfilled expectations: %s", err)
+		}
+	})
+	t.Run("should fail to get task", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("sqlmock.New error: %v", err)
+		}
+		defer db.Close()
+		id := 2
+		mock.ExpectQuery("^SELECT (.+) FROM tasks").WithArgs(id).WillReturnError(fmt.Errorf("ErrNoRows"))
+		exid, title, description := 1, "Test task", "Test task description"
+		pg := NewPgTaskRepository(db)
+		pg.Insert(exid, title, description)
+
+		_, err = pg.Get(id)
+
+		if err == nil {
+			t.Errorf("expected error but got nothing")
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("there were unfulfilled expectations: %s", err)
+		}
+	})
+}
+
 func TestPgInsert(t *testing.T) {
 	t.Run("should create a task", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
@@ -24,11 +71,11 @@ func TestPgInsert(t *testing.T) {
 			t.Fatalf("failed to create mock sql db: %v", err)
 		}
 		defer db.Close()
-		pg := NewPgTaskRepository(db)
-		id := uuid.New().String()
+		id := 1
 		title := "Test task"
 		description := "Test task description"
 		mock.ExpectExec("INSERT INTO tasks").WithArgs(id, title, description, false, AnyTime{}, AnyTime{}).WillReturnResult(sqlmock.NewResult(1, 1))
+		pg := NewPgTaskRepository(db)
 
 		task, err := pg.Insert(id, title, description)
 
@@ -40,14 +87,64 @@ func TestPgInsert(t *testing.T) {
 			t.Errorf("Inserted task expected title and description %s, %s but got %s, %s", task.Title, task.Description, title, description)
 			return
 		}
-		if task.Id == "" {
-			t.Errorf("Inserted task must have an Id")
-			return
-		}
 		if task.CreatedAt.IsZero() || task.UpdatedAt.IsZero() {
 			t.Errorf("Inserted task must have created_at and updated_at field")
 		}
 		// we make sure that all expectations were met
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("there were unfulfilled expectations: %s", err)
+		}
+	})
+	t.Run("fail to create task with duplicate ID", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("failed to create mock sql db: %v", err)
+		}
+		defer db.Close()
+		id := 1
+		title := "Test task 2"
+		description := "Test task 2 description"
+		mock.ExpectExec("INSERT INTO tasks").WithArgs(id, title, description, false, AnyTime{}, AnyTime{}).WillReturnError(fmt.Errorf("DB integrity error"))
+		pg := NewPgTaskRepository(db)
+		pg.Insert(1, "Test task 1", "Test task 1 description")
+
+		_, err = pg.Insert(id, title, description)
+
+		if err == nil {
+			t.Errorf("expecting an error, but there was none")
+		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("there were unfulfilled expectations: %s", err)
+		}
+	})
+}
+
+func TestPgUpdate(t *testing.T) {
+	t.Run("update task success", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("sqlmock.New error: %v", err)
+		}
+		defer db.Close()
+		id, title, description := 1, "Test task", "Test task description"
+		sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(id, title, description, false, time.Now(), time.Now())
+		updateTitle := "Test task (updated)"
+		row := sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(id, updateTitle, description, false, time.Now(), time.Now())
+		mock.ExpectExec("UPDATE tasks").WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectQuery("SELECT (.+) FROM tasks").WithArgs(id).WillReturnRows(row)
+		pg := NewPgTaskRepository(db)
+
+		task, err := pg.Update(id, map[string]any{
+			"Title": "Test task (updated)",
+		})
+
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		if task.Title != updateTitle {
+			t.Errorf("task is not updated, expected %s but got %s", updateTitle, task.Title)
+		}
 		if err := mock.ExpectationsWereMet(); err != nil {
 			t.Errorf("there were unfulfilled expectations: %s", err)
 		}
