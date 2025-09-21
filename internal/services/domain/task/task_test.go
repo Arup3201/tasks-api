@@ -88,7 +88,7 @@ func TestAddTask(t *testing.T) {
 		ts := NewTaskService(NewMockTaskRepository())
 
 		_, err := ts.CreateTask(title, description)
-		inputInvalidError, ok := err.(errors.Error)
+		inputInvalidError, ok := err.(*errors.AppError)
 		if !ok {
 			t.Errorf("expected `Error` on create task with empty title")
 		}
@@ -102,7 +102,7 @@ func TestAddTask(t *testing.T) {
 		ts := NewTaskService(NewMockTaskRepository())
 
 		_, err := ts.CreateTask(title, description)
-		inputInvalidError, ok := err.(errors.Error)
+		inputInvalidError, ok := err.(*errors.AppError)
 		if !ok {
 			t.Errorf("expected `Error` on create task with empty description")
 		}

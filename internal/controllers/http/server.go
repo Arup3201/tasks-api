@@ -1,9 +1,10 @@
 package http
 
 import (
+	"github.com/Arup3201/gotasks/internal/controllers/http/middlewares"
 	"github.com/Arup3201/gotasks/internal/services/domain/task"
 	"github.com/Arup3201/gotasks/internal/storages"
-	. "github.com/Arup3201/gotasks/internal/utils"
+	"github.com/Arup3201/gotasks/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,7 +15,7 @@ type HttpServer struct {
 
 func CreateServer(storage storages.TaskRepository) *HttpServer {
 	engine := gin.Default()
-	// engine.Use(middleware)
+	engine.Use(middlewares.HttpErrorResponse())
 	serviceHandler := task.NewTaskService(storage)
 	return &HttpServer{
 		engine:       engine,
@@ -32,6 +33,6 @@ func (server *HttpServer) AttachRoutes() {
 }
 
 func (server *HttpServer) Run(host string) error {
-	err := server.engine.Run(host + ":" + Config.Port)
+	err := server.engine.Run(host + ":" + utils.Config.Port)
 	return err
 }

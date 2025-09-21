@@ -1,31 +1,39 @@
 package errors
 
-type Error struct {
+const (
+	INVALID_INPUT = "INVALID_INPUT"
+	NOT_FOUND     = "NOT_FOUND"
+	NO_OPERATION  = "NOOP"
+)
+
+type AppError struct {
 	Type   string
 	Title  string
 	Detail string
+	Cause  error
 }
 
-func New(type_, title, detail string) Error {
-	return Error{
+func New(type_, title, detail string, cause error) *AppError {
+	return &AppError{
 		Type:   type_,
 		Title:  title,
 		Detail: detail,
+		Cause:  cause,
 	}
 }
 
-func (e Error) Error() string {
+func (e *AppError) Error() string {
 	return e.Detail
 }
 
-func InputValidationError(title, detail string) Error {
-	return New("INVALID_INPUT", title, detail)
+func InputValidationError(title, detail string) *AppError {
+	return New(INVALID_INPUT, title, detail, nil)
 }
 
-func NotFoundError(detail string) Error {
-	return New("NOT_FOUND", "Resource not found", detail)
+func NotFoundError(detail string) *AppError {
+	return New(NOT_FOUND, "Resource not found", detail, nil)
 }
 
-func NoOp(detail string) Error {
-	return New("NOOP", "No operation happened", detail)
+func NoOp(detail string) *AppError {
+	return New(NO_OPERATION, "No operation happened", detail, nil)
 }
