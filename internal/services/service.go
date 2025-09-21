@@ -3,9 +3,9 @@ package services
 import "github.com/Arup3201/gotasks/internal/entities/task"
 
 type UpdateTaskData struct {
-	Title       *string
-	Description *string
-	IsCompleted *bool
+	Title       *string `json:"title"`
+	Description *string `json:"description"`
+	IsCompleted *bool   `json:"is_completed"`
 }
 
 type ServiceHandler interface {

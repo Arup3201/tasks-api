@@ -25,3 +25,7 @@ func InputValidationError(title, detail string) Error {
 func NotFoundError(detail string) Error {
 	return New("NOT_FOUND", "Resource not found", detail)
 }
+
+func NoOp(detail string) Error {
+	return New("NOOP", "No operation happened", detail)
+}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Arup3201/gotasks/internal/entities/task"
+	"github.com/Arup3201/gotasks/internal/errors"
 )
 
 type PgTaskRepository struct {
@@ -51,15 +52,19 @@ func (pg *PgTaskRepository) Update(taskId int, data map[string]any) (*task.Task,
 
 	title, ok := data["Title"]
 	if ok {
-		setFields = append(setFields, fmt.Sprintf("title=%s", title))
+		setFields = append(setFields, fmt.Sprintf("title='%s'", title))
 	}
 	description, ok := data["Description"]
 	if ok {
-		setFields = append(setFields, fmt.Sprintf("description=%s", description))
+		setFields = append(setFields, fmt.Sprintf("description='%s'", description))
 	}
 	isCompleted, ok := data["IsCompleted"]
 	if ok {
 		setFields = append(setFields, fmt.Sprintf("is_completed=%s", isCompleted))
+	}
+
+	if len(setFields) == 0 {
+		return nil, errors.NoOp("Found no fields to update")
 	}
 
 	execString := fmt.Sprintf("UPDATE tasks SET %s WHERE id=($1)", strings.Join(setFields, ", "))
