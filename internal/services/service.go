@@ -13,5 +13,6 @@ type ServiceHandler interface {
 	CreateTask(title, description string) (*task.Task, error)
 	GetTask(taskId int) (*task.Task, error)
 	UpdateTask(taskId int, data UpdateTaskData) (*task.Task, error)
+	DeleteTask(taskId int) (*int, error)
 	SearchTasks(query string) ([]task.Task, error)
 }

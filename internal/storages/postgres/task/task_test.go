@@ -151,6 +151,33 @@ func TestPgUpdate(t *testing.T) {
 	})
 }
 
+func TestPgDelete(t *testing.T) {
+	t.Run("delete a task", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("sqlmock.New error: %v", err)
+		}
+		defer db.Close()
+		sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(1, "Test task 1", "Test task 1 description", false, time.Now(), time.Now()).AddRow(2, "Test task 2", "Test task 2 description", true, time.Now(), time.Now()).AddRow(3, "Test task 3", "Test task 3 description", false, time.Now(), time.Now())
+		id := 2
+		mock.ExpectExec("DELETE tasks").WithArgs(id).WillReturnResult(sqlmock.NewResult(1, 1))
+		pg := NewPgTaskRepository(db)
+
+		dId, err := pg.Delete(id)
+
+		if err != nil {
+			t.Errorf("error occured: %v", err)
+			return
+		}
+		if *dId != id {
+			t.Errorf("expected deleted task %d but got %d", id, *dId)
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("there were unfulfilled expectations: %s", err)
+		}
+	})
+}
+
 func TestPgList(t *testing.T) {
 	t.Run("list all tasks", func(t *testing.T) {
 		db, mock, err := sqlmock.New()

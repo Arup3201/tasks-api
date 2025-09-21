@@ -34,5 +34,6 @@ type TaskRepository interface {
 	Get(taskId int) (*task.Task, error)
 	Insert(taskId int, taskTitle, taskDesc string) (*task.Task, error)
 	Update(taskId int, data map[string]any) (*task.Task, error)
+	Delete(taskId int) (*int, error)
 	List() ([]task.Task, error)
 }

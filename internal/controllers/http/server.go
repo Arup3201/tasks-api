@@ -27,6 +27,7 @@ func (server *HttpServer) AttachRoutes() {
 	server.engine.POST("/tasks", server.routeHandler.AddTask)
 	server.engine.GET("/tasks/:id", server.routeHandler.GetTask)
 	server.engine.PATCH("/tasks/:id", server.routeHandler.UpdateTask)
+	server.engine.DELETE("/tasks/:id", server.routeHandler.DeleteTask)
 	server.engine.GET("/search/tasks", server.routeHandler.SearchTasks)
 }
 

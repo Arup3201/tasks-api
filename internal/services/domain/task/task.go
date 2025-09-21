@@ -45,9 +45,6 @@ func (ts *TaskService) GetTask(taskId int) (*task.Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	if task == nil {
-		return nil, err
-	}
 
 	return task, nil
 }
@@ -85,6 +82,15 @@ func (ts *TaskService) UpdateTask(taskId int, data services.UpdateTaskData) (*ta
 	}
 
 	return task, nil
+}
+
+func (ts *TaskService) DeleteTask(taskId int) (*int, error) {
+	dId, err := ts.taskRepository.Delete(taskId)
+	if err != nil {
+		return nil, err
+	}
+
+	return dId, nil
 }
 
 func (ts *TaskService) SearchTasks(query string) ([]task.Task, error) {

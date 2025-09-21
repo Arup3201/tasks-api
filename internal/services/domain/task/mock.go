@@ -66,6 +66,17 @@ func (tr *mockTaskRepository) Update(taskId int, data map[string]any) (*task.Tas
 	return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
 }
 
+func (tr *mockTaskRepository) Delete(taskId int) (*int, error) {
+	for i, task := range tr.tasks {
+		if task.Id == taskId {
+			tr.tasks = append(tr.tasks[:i], tr.tasks[i+1:]...)
+			return &task.Id, nil
+		}
+	}
+
+	return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
+}
+
 func (tr *mockTaskRepository) List() ([]task.Task, error) {
 	return tr.tasks, nil
 }

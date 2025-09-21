@@ -101,8 +101,29 @@ func (handler *routeHandler) UpdateTask(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, editedTask)
 }
 
+func (handler *routeHandler) DeleteTask(c *gin.Context) {
+	var id, err = strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	taskId, err := handler.serviceHandler.DeleteTask(id)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, taskId)
+}
+
 func (handler *routeHandler) SearchTasks(c *gin.Context) {
 	var query string = c.Query("q")
+	if query == "" {
+		c.Error(fmt.Errorf("Search query can't be empty"))
+		return
+	}
+
 	tasks, err := handler.serviceHandler.SearchTasks(query)
 	if err != nil {
 		c.Error(err)

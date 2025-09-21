@@ -292,6 +292,21 @@ func TestUpdateTask(t *testing.T) {
 	})
 }
 
+func TestDeleteTask(t *testing.T) {
+	t.Run("delete a task", func(t *testing.T) {
+		title := "Test task"
+		description := "Test task description"
+		ts := NewTaskService(NewMockTaskRepository())
+		created, _ := ts.CreateTask(title, description)
+
+		taskId, _ := ts.DeleteTask(created.Id)
+
+		if *taskId != created.Id {
+			t.Errorf("Task ID does not match, expected %d but got %d", created.Id, *taskId)
+		}
+	})
+}
+
 func TestSearchTasks(t *testing.T) {
 	t.Run("Search tasks with match", func(t *testing.T) {
 		tasks := []struct {

@@ -76,6 +76,17 @@ func (pg *PgTaskRepository) Update(taskId int, data map[string]any) (*task.Task,
 	return pg.Get(taskId)
 }
 
+func (pg *PgTaskRepository) Delete(taskId int) (*int, error) {
+	_, err := pg.db.Exec("DELETE FROM tasks WHERE id=($1)", taskId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
+		}
+	}
+
+	return &taskId, nil
+}
+
 func (pg *PgTaskRepository) List() ([]task.Task, error) {
 	var tasks []task.Task
 	rows, err := pg.db.Query("SELECT * FROM tasks")
