@@ -9,20 +9,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Arup3201/gotasks/internal/controllers/http/middlewares"
 	entities "github.com/Arup3201/gotasks/internal/entities/task"
 	services "github.com/Arup3201/gotasks/internal/services/domain/task"
 	"github.com/gin-gonic/gin"
 )
 
-func getTestContext(t testing.TB, w http.ResponseWriter, r *http.Request) *gin.Context {
+func getTestContext(t testing.TB, w http.ResponseWriter, r *http.Request) (*gin.Context, *gin.Engine) {
 	t.Helper()
 
 	gin.SetMode(gin.TestMode)
 
-	ctx, _ := gin.CreateTestContext(w)
+	ctx, engine := gin.CreateTestContext(w)
 	ctx.Request = r
 
-	return ctx
+	return ctx, engine
 }
 
 func TestGetTasks(t *testing.T) {
@@ -51,9 +52,10 @@ func TestGetTasks(t *testing.T) {
 		routeHandler := getRouteHandler(serviceHandler)
 		request, _ := http.NewRequest("GET", "/tasks", nil)
 		response := httptest.NewRecorder()
-		ctx := getTestContext(t, response, request)
+		ctx, engine := getTestContext(t, response, request)
+		engine.GET("/tasks", routeHandler.GetTasks)
 
-		routeHandler.GetTasks(ctx)
+		engine.ServeHTTP(response, ctx.Request)
 
 		var got []entities.Task
 		want := 2
@@ -73,7 +75,10 @@ func TestGetTasks(t *testing.T) {
 		routeHandler := getRouteHandler(serviceHandler)
 		request, _ := http.NewRequest("GET", "/tasks", nil)
 		response := httptest.NewRecorder()
-		ctx := getTestContext(t, response, request)
+		ctx, engine := getTestContext(t, response, request)
+		engine.GET("/tasks", routeHandler.GetTasks)
+
+		engine.ServeHTTP(response, ctx.Request)
 
 		routeHandler.GetTasks(ctx)
 
@@ -103,9 +108,10 @@ func TestAddTask(t *testing.T) {
 		request, _ := http.NewRequest("POST", "/tasks", payload)
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
-		ctx := getTestContext(t, response, request)
+		ctx, engine := getTestContext(t, response, request)
+		engine.POST("/tasks", routeHandler.AddTask)
 
-		routeHandler.AddTask(ctx)
+		engine.ServeHTTP(response, ctx.Request)
 
 		var got entities.Task
 		err := json.NewDecoder(response.Body).Decode(&got)
@@ -150,9 +156,10 @@ func TestAddTask(t *testing.T) {
 		request, _ := http.NewRequest("POST", "/tasks", payload)
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
-		ctx := getTestContext(t, response, request)
+		ctx, engine := getTestContext(t, response, request)
+		engine.POST("/tasks", routeHandler.AddTask)
 
-		routeHandler.AddTask(ctx)
+		engine.ServeHTTP(response, ctx.Request)
 
 		var got entities.Task
 		err := json.NewDecoder(response.Body).Decode(&got)
@@ -176,9 +183,11 @@ func TestAddTask(t *testing.T) {
 		request, _ := http.NewRequest("POST", "/tasks", payload)
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
-		ctx := getTestContext(t, response, request)
+		ctx, engine := getTestContext(t, response, request)
+		engine.Use(middlewares.HttpErrorResponse())
+		engine.POST("/tasks", routeHandler.AddTask)
 
-		routeHandler.AddTask(ctx)
+		engine.ServeHTTP(response, ctx.Request)
 
 		want := BadRequest
 		if got := response.Result().StatusCode; got != want {
