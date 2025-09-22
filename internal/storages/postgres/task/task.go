@@ -24,7 +24,7 @@ func (pg *PgTaskRepository) Get(taskId int) (*task.Task, error) {
 	var task task.Task
 	if err := pg.db.QueryRow("SELECT * FROM tasks WHERE id = ($1)", taskId).Scan(&task.Id, &task.Title, &task.Description, &task.IsCompleted, &task.CreatedAt, &task.UpdatedAt); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("Get %d: unknown task", taskId)
+			return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
 		}
 		return nil, err
 	}
@@ -48,6 +48,11 @@ func (pg *PgTaskRepository) Insert(taskId int, taskTitle, taskDesc string) (*tas
 }
 
 func (pg *PgTaskRepository) Update(taskId int, data map[string]any) (*task.Task, error) {
+	_, err := pg.Get(taskId)
+	if err != nil {
+		return nil, err
+	}
+
 	setFields := []string{}
 
 	title, ok := data["Title"]
@@ -68,7 +73,7 @@ func (pg *PgTaskRepository) Update(taskId int, data map[string]any) (*task.Task,
 	}
 
 	execString := fmt.Sprintf("UPDATE tasks SET %s WHERE id=($1)", strings.Join(setFields, ", "))
-	_, err := pg.db.Exec(execString, taskId)
+	_, err = pg.db.Exec(execString, taskId)
 	if err != nil {
 		return nil, err
 	}

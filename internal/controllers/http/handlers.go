@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Arup3201/gotasks/internal/errors"
 	"github.com/Arup3201/gotasks/internal/services"
 	"github.com/gin-gonic/gin"
 )
@@ -27,7 +28,12 @@ func getRouteHandler(handler services.ServiceHandler) *routeHandler {
 func (handler *routeHandler) GetTasks(c *gin.Context) {
 	tasks, err := handler.serviceHandler.GetAllTasks()
 	if err != nil {
-		c.Error(err)
+		appError, ok := err.(*errors.AppError)
+		if ok {
+			c.Error(FromAppError(appError))
+		} else {
+			c.Error(InternalServerError(err))
+		}
 		return
 	}
 	c.IndentedJSON(http.StatusOK, tasks)
@@ -37,22 +43,33 @@ func (handler *routeHandler) AddTask(c *gin.Context) {
 	var payload CreateTask
 
 	if err := c.BindJSON(&payload); err != nil {
-		c.Error(fmt.Errorf("c.BindJSON failed with error %v", err))
+		c.Error(InternalServerError(fmt.Errorf("c.BindJSON failed with error %v", err)))
 		return
 	}
 
 	if payload.Title == nil {
-		c.Error(fmt.Errorf("Payload missing 'title'"))
+		c.Error(MissingBodyError(ErrorField{
+			Field:  "title",
+			Reason: "Task title is required",
+		}))
 		return
 	}
 	if payload.Description == nil {
-		c.Error(fmt.Errorf("Payload missing 'description'"))
+		c.Error(MissingBodyError(ErrorField{
+			Field:  "title",
+			Reason: "Task title is required",
+		}))
 		return
 	}
 
 	newTask, err := handler.serviceHandler.CreateTask(*payload.Title, *payload.Description)
 	if err != nil {
-		c.Error(err)
+		appError, ok := err.(*errors.AppError)
+		if ok {
+			c.Error(FromAppError(appError))
+		} else {
+			c.Error(InternalServerError(err))
+		}
 		return
 	}
 
@@ -62,13 +79,21 @@ func (handler *routeHandler) AddTask(c *gin.Context) {
 func (handler *routeHandler) GetTask(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.Error(err)
+		c.Error(InvalidRequestParamError(ErrorField{
+			Field:  "id",
+			Reason: "'id' should be a valid integer",
+		}))
 		return
 	}
 
 	task, err := handler.serviceHandler.GetTask(id)
 	if err != nil {
-		c.Error(err)
+		appError, ok := err.(*errors.AppError)
+		if ok {
+			c.Error(FromAppError(appError))
+		} else {
+			c.Error(InternalServerError(err))
+		}
 		return
 	}
 
@@ -78,23 +103,31 @@ func (handler *routeHandler) GetTask(c *gin.Context) {
 func (handler *routeHandler) UpdateTask(c *gin.Context) {
 	var id, err = strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.Error(err)
+		c.Error(InvalidRequestParamError(ErrorField{
+			Field:  "id",
+			Reason: "'id' should be a valid integer",
+		}))
 		return
 	}
 	var payload services.UpdateTaskData
 	if err := c.BindJSON(&payload); err != nil {
-		c.Error(fmt.Errorf("c.BindJSON failed with error %v", err))
+		c.Error(InternalServerError(fmt.Errorf("c.BindJSON failed with error %v", err)))
 		return
 	}
 
 	if payload.Title == nil && payload.Description == nil && payload.IsCompleted == nil {
-		c.Error(fmt.Errorf("Update payload is empty"))
+		c.Error(NoOpError())
 		return
 	}
 
 	editedTask, err := handler.serviceHandler.UpdateTask(id, payload)
 	if err != nil {
-		c.Error(err)
+		appError, ok := err.(*errors.AppError)
+		if ok {
+			c.Error(FromAppError(appError))
+		} else {
+			c.Error(InternalServerError(err))
+		}
 		return
 	}
 
@@ -104,13 +137,21 @@ func (handler *routeHandler) UpdateTask(c *gin.Context) {
 func (handler *routeHandler) DeleteTask(c *gin.Context) {
 	var id, err = strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.Error(err)
+		c.Error(InvalidRequestParamError(ErrorField{
+			Field:  "id",
+			Reason: "'id' should be a valid integer",
+		}))
 		return
 	}
 
 	taskId, err := handler.serviceHandler.DeleteTask(id)
 	if err != nil {
-		c.Error(err)
+		appError, ok := err.(*errors.AppError)
+		if ok {
+			c.Error(FromAppError(appError))
+		} else {
+			c.Error(InternalServerError(err))
+		}
 		return
 	}
 
@@ -120,13 +161,21 @@ func (handler *routeHandler) DeleteTask(c *gin.Context) {
 func (handler *routeHandler) SearchTasks(c *gin.Context) {
 	var query string = c.Query("q")
 	if query == "" {
-		c.Error(fmt.Errorf("Search query can't be empty"))
+		c.Error(InvalidRequestParamError(ErrorField{
+			Field:  "q",
+			Reason: "query param 'q' is required",
+		}))
 		return
 	}
 
 	tasks, err := handler.serviceHandler.SearchTasks(query)
 	if err != nil {
-		c.Error(err)
+		appError, ok := err.(*errors.AppError)
+		if ok {
+			c.Error(FromAppError(appError))
+		} else {
+			c.Error(InternalServerError(err))
+		}
 		return
 	}
 
