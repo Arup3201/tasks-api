@@ -268,7 +268,7 @@ func TestGetTask(t *testing.T) {
 
 		engine.ServeHTTP(response, ctx.Request)
 
-		want := 404
+		want := NotFound
 		if got := response.Result().StatusCode; got != want {
 			t.Errorf("should return NotFound error, expected status code %d but got %d", want, got)
 		}
@@ -439,7 +439,7 @@ func TestUpdateTask(t *testing.T) {
 
 		engine.ServeHTTP(response, ctx.Request)
 
-		want := 404
+		want := NotFound
 		if got := response.Result().StatusCode; got != want {
 			t.Errorf("expected NotFound error, expected status code %d but got %d", want, got)
 		}
@@ -476,9 +476,86 @@ func TestUpdateTask(t *testing.T) {
 
 		engine.ServeHTTP(response, ctx.Request)
 
-		want := 204
+		want := NoOp
 		if got := response.Result().StatusCode; got != want {
 			t.Errorf("expected NoOp response, expected status code %d but got %d", want, got)
+		}
+	})
+}
+
+func TestDeleteTask(t *testing.T) {
+	t.Run("delete task success", func(t *testing.T) {
+		repo := &MockRepository{
+			tasks: []entities.Task{
+				{
+					Id:          1,
+					Title:       "Task 1",
+					Description: "No description",
+					IsCompleted: false,
+					CreatedAt:   time.Now(),
+					UpdatedAt:   time.Now(),
+				},
+				{
+					Id:          2,
+					Title:       "Task 2",
+					Description: "No description",
+					IsCompleted: true,
+					CreatedAt:   time.Now(),
+					UpdatedAt:   time.Now(),
+				},
+			},
+		}
+		serviceHandler, _ := services.NewTaskService(repo)
+		routeHandler := getRouteHandler(serviceHandler)
+		request, _ := http.NewRequest("DELETE", "/tasks/2", nil)
+		response := httptest.NewRecorder()
+		ctx, engine := getTestContext(t, response, request)
+		engine.DELETE("/tasks/:id", routeHandler.DeleteTask)
+
+		engine.ServeHTTP(response, ctx.Request)
+
+		want := 200
+		if got := response.Result().StatusCode; got != want {
+			t.Errorf("delete failed, expected status code %d but got %d", want, got)
+		}
+		id := "2"
+		if got := response.Body.String(); got != id {
+			t.Errorf("delete did return ID, expected %s but got %s", id, got)
+		}
+	})
+	t.Run("delete task fail not found", func(t *testing.T) {
+		repo := &MockRepository{
+			tasks: []entities.Task{
+				{
+					Id:          1,
+					Title:       "Task 1",
+					Description: "No description",
+					IsCompleted: false,
+					CreatedAt:   time.Now(),
+					UpdatedAt:   time.Now(),
+				},
+				{
+					Id:          2,
+					Title:       "Task 2",
+					Description: "No description",
+					IsCompleted: true,
+					CreatedAt:   time.Now(),
+					UpdatedAt:   time.Now(),
+				},
+			},
+		}
+		serviceHandler, _ := services.NewTaskService(repo)
+		routeHandler := getRouteHandler(serviceHandler)
+		request, _ := http.NewRequest("DELETE", "/tasks/3", nil)
+		response := httptest.NewRecorder()
+		ctx, engine := getTestContext(t, response, request)
+		engine.DELETE("/tasks/:id", routeHandler.DeleteTask)
+
+		engine.ServeHTTP(response, ctx.Request)
+
+		want := NotFound
+		if got := response.Result().StatusCode; got != want {
+			t.Errorf("expected NotFound error %d, but got %d", want, got)
 		}
 	})
 }
