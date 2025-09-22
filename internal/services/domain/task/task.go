@@ -15,11 +15,16 @@ type TaskService struct {
 	lastTaskId     int
 }
 
-func NewTaskService(repo storages.TaskRepository) *TaskService {
+func NewTaskService(repo storages.TaskRepository) (*TaskService, error) {
+	tasks, err := repo.List()
+	if err != nil {
+		return nil, err
+	}
+
 	return &TaskService{
 		taskRepository: repo,
-		lastTaskId:     0,
-	}
+		lastTaskId:     len(tasks),
+	}, nil
 }
 
 func (ts *TaskService) CreateTask(title, description string) (*task.Task, error) {

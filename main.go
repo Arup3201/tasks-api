@@ -16,7 +16,10 @@ func main() {
 		log.Fatalf("Storage creation failed: %v", err)
 	}
 
-	server := http.CreateServer(storage)
+	server, err := http.CreateServer(storage)
+	if err != nil {
+		log.Fatalf("Server create failed: %v", err)
+	}
 	server.AttachRoutes()
 	err = server.Run("localhost") // default localhost, otherwise pass the URL
 	if err != nil {

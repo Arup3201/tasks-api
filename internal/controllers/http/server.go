@@ -13,14 +13,17 @@ type HttpServer struct {
 	routeHandler *routeHandler
 }
 
-func CreateServer(storage storages.TaskRepository) *HttpServer {
+func CreateServer(storage storages.TaskRepository) (*HttpServer, error) {
 	engine := gin.Default()
 	engine.Use(middlewares.HttpErrorResponse())
-	serviceHandler := task.NewTaskService(storage)
+	serviceHandler, err := task.NewTaskService(storage)
+	if err != nil {
+		return nil, err
+	}
 	return &HttpServer{
 		engine:       engine,
 		routeHandler: getRouteHandler(serviceHandler),
-	}
+	}, nil
 }
 
 func (server *HttpServer) AttachRoutes() {
