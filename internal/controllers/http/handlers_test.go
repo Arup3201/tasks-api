@@ -549,6 +549,7 @@ func TestDeleteTask(t *testing.T) {
 		request, _ := http.NewRequest("DELETE", "/tasks/3", nil)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
+		engine.Use(middlewares.HttpErrorResponse())
 		engine.DELETE("/tasks/:id", routeHandler.DeleteTask)
 
 		engine.ServeHTTP(response, ctx.Request)
