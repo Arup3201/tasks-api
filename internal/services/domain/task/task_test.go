@@ -12,7 +12,7 @@ func TestAddTask(t *testing.T) {
 	t.Run("Create a task - 1", func(t *testing.T) {
 		title := "Test task"
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 
 		got, _ := ts.CreateTask(title, description)
 
@@ -26,7 +26,7 @@ func TestAddTask(t *testing.T) {
 	t.Run("Create a task - 2", func(t *testing.T) {
 		title := "Test task 1"
 		description := "Test task 1 description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 
 		got, _ := ts.CreateTask(title, description)
 
@@ -40,7 +40,7 @@ func TestAddTask(t *testing.T) {
 	t.Run("Valid task ID", func(t *testing.T) {
 		title := "Test task"
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 
 		got, _ := ts.CreateTask(title, description)
 
@@ -51,7 +51,7 @@ func TestAddTask(t *testing.T) {
 	t.Run("Two tasks with different ID", func(t *testing.T) {
 		title := "Test task"
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 
 		task1, _ := ts.CreateTask(title, description)
 		task2, _ := ts.CreateTask(title, description)
@@ -63,7 +63,7 @@ func TestAddTask(t *testing.T) {
 	t.Run("Create task with valid created_at value", func(t *testing.T) {
 		title := "Test task"
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 
 		task, _ := ts.CreateTask(title, description)
 
@@ -74,7 +74,7 @@ func TestAddTask(t *testing.T) {
 	t.Run("Create task with valid updated_at value", func(t *testing.T) {
 		title := "Test task"
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 
 		task, _ := ts.CreateTask(title, description)
 
@@ -85,7 +85,7 @@ func TestAddTask(t *testing.T) {
 	t.Run("Fail to create task with empty title", func(t *testing.T) {
 		title := ""
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 
 		_, err := ts.CreateTask(title, description)
 		inputInvalidError, ok := err.(*errors.AppError)
@@ -99,7 +99,7 @@ func TestAddTask(t *testing.T) {
 	t.Run("Fail to create task with empty description", func(t *testing.T) {
 		title := "Test task"
 		description := ""
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 
 		_, err := ts.CreateTask(title, description)
 		inputInvalidError, ok := err.(*errors.AppError)
@@ -116,7 +116,7 @@ func TestGetTask(t *testing.T) {
 	t.Run("Get task ID is correct after creating", func(t *testing.T) {
 		title := "Test task"
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		created, _ := ts.CreateTask(title, description)
 
 		task, _ := ts.GetTask(created.Id)
@@ -128,7 +128,7 @@ func TestGetTask(t *testing.T) {
 	t.Run("Get task title is correct after creating - 1", func(t *testing.T) {
 		title := "Test task 1"
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		created, _ := ts.CreateTask(title, description)
 
 		task, _ := ts.GetTask(created.Id)
@@ -140,7 +140,7 @@ func TestGetTask(t *testing.T) {
 	t.Run("Get task title is correct after creating - 2", func(t *testing.T) {
 		title := "Test task 2"
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		created, _ := ts.CreateTask(title, description)
 
 		task, _ := ts.GetTask(created.Id)
@@ -174,7 +174,7 @@ func TestGetAllTasks(t *testing.T) {
 				description: "1 Hr basketball time at evening",
 			},
 		}
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		for _, tc := range cases {
 			ts.CreateTask(tc.title, tc.description)
 		}
@@ -195,7 +195,7 @@ func TestUpdateTask(t *testing.T) {
 	t.Run("update task updates correct task", func(t *testing.T) {
 		title := "Test task"
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		created, _ := ts.CreateTask(title, description)
 		updated_title := "Test task (updated)"
 
@@ -213,7 +213,7 @@ func TestUpdateTask(t *testing.T) {
 	t.Run("update task updates title", func(t *testing.T) {
 		title := "Test task"
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		created, _ := ts.CreateTask(title, description)
 		updated_title := "Test task (updated)"
 
@@ -228,7 +228,7 @@ func TestUpdateTask(t *testing.T) {
 	t.Run("update task updates description", func(t *testing.T) {
 		title := "Test task"
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		created, _ := ts.CreateTask(title, description)
 		updated_description := "Test task description (updated)"
 
@@ -243,7 +243,7 @@ func TestUpdateTask(t *testing.T) {
 	t.Run("update task updates is_completed", func(t *testing.T) {
 		title := "Test task"
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		created, _ := ts.CreateTask(title, description)
 		isCompleted := true
 
@@ -258,7 +258,7 @@ func TestUpdateTask(t *testing.T) {
 	t.Run("update task updates updated_at value", func(t *testing.T) {
 		title := "Test task"
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		created, _ := ts.CreateTask(title, description)
 		time.Sleep(1000 * 2) // 2 secs
 		updated_title := "Test task (updated)"
@@ -277,7 +277,7 @@ func TestUpdateTask(t *testing.T) {
 	t.Run("update task persists the update", func(t *testing.T) {
 		title := "Test task"
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		created, _ := ts.CreateTask(title, description)
 		updated_title := "Test task (updated)"
 		updated, _ := ts.UpdateTask(created.Id, services.UpdateTaskData{
@@ -296,7 +296,7 @@ func TestDeleteTask(t *testing.T) {
 	t.Run("delete a task", func(t *testing.T) {
 		title := "Test task"
 		description := "Test task description"
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		created, _ := ts.CreateTask(title, description)
 
 		taskId, _ := ts.DeleteTask(created.Id)
@@ -330,7 +330,7 @@ func TestSearchTasks(t *testing.T) {
 				description: "1 Hr basketball time at evening",
 			},
 		}
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		for _, task := range tasks {
 			ts.CreateTask(task.title, task.description)
 		}
@@ -369,7 +369,7 @@ func TestSearchTasks(t *testing.T) {
 				description: "1 Hr basketball time at evening",
 			},
 		}
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		for _, task := range tasks {
 			ts.CreateTask(task.title, task.description)
 		}
@@ -408,7 +408,7 @@ func TestSearchTasks(t *testing.T) {
 				description: "1 Hr basketball time at evening",
 			},
 		}
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		for _, task := range tasks {
 			ts.CreateTask(task.title, task.description)
 		}
@@ -447,7 +447,7 @@ func TestSearchTasks(t *testing.T) {
 				description: "1 Hr basketball at evening",
 			},
 		}
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		for _, task := range tasks {
 			ts.CreateTask(task.title, task.description)
 		}
@@ -486,7 +486,7 @@ func TestSearchTasks(t *testing.T) {
 				description: "1 Hr basketball at evening",
 			},
 		}
-		ts := NewTaskService(NewMockTaskRepository())
+		ts, _ := NewTaskService(NewMockTaskRepository())
 		for _, task := range tasks {
 			ts.CreateTask(task.title, task.description)
 		}

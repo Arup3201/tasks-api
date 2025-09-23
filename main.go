@@ -9,14 +9,17 @@ import (
 )
 
 func main() {
-	Config.Configure()
+	Config.Configure(".env")
 
 	storage, err := storages.New(storages.Postgres)
 	if err != nil {
 		log.Fatalf("Storage creation failed: %v", err)
 	}
 
-	server := http.CreateServer(storage)
+	server, err := http.CreateServer(storage)
+	if err != nil {
+		log.Fatalf("Server create failed: %v", err)
+	}
 	server.AttachRoutes()
 	err = server.Run("localhost") // default localhost, otherwise pass the URL
 	if err != nil {

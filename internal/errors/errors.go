@@ -23,6 +23,9 @@ func New(type_, title, detail string, cause error) *AppError {
 }
 
 func (e *AppError) Error() string {
+	if e.Cause != nil {
+		return e.Detail + ": " + e.Cause.Error()
+	}
 	return e.Detail
 }
 
