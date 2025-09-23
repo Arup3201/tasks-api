@@ -2,8 +2,10 @@ package utils
 
 import (
 	"fmt"
+	"log"
+	"os"
 
-	"github.com/nathanbcrocker/env"
+	"github.com/joho/godotenv"
 )
 
 const (
@@ -29,48 +31,52 @@ type envList struct {
 
 var Config = &envList{}
 
-func (eList *envList) Configure() {
-	e := env.NewEnv()
-	port, ok := e.Get(PORT)
+func (eList *envList) Configure(filename string) {
+	err := godotenv.Load(filename)
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	port, ok := os.LookupEnv(PORT)
 	if !ok {
 		eList.Port = defaultPort
 	} else {
-		eList.Port = port.Value
+		eList.Port = port
 	}
 
-	db_host, ok := e.Get(DBHOST)
+	db_host, ok := os.LookupEnv(DBHOST)
 	if !ok {
-		panic("DBHOST variable missing in .env")
+		log.Fatal("DBHOST variable missing in .env")
 	} else {
-		eList.DBHost = db_host.Value
+		eList.DBHost = db_host
 	}
 
-	db_user, ok := e.Get(DBUSER)
+	db_user, ok := os.LookupEnv(DBUSER)
 	if !ok {
-		panic("DBUSER variable missing in .env")
+		log.Fatal("DBUSER variable missing in .env")
 	} else {
-		eList.DBUser = db_user.Value
+		eList.DBUser = db_user
 	}
 
-	db_port, ok := e.Get(DBPORT)
+	db_port, ok := os.LookupEnv(DBPORT)
 	if !ok {
 		eList.DBPort = defaultDBPort
 		fmt.Printf("Default DB Port used: 5432")
 	} else {
-		eList.DBPort = db_port.Value
+		eList.DBPort = db_port
 	}
 
-	db_pass, ok := e.Get(DBPASS)
+	db_pass, ok := os.LookupEnv(DBPASS)
 	if !ok {
-		panic("DBPASS variable missing in .env")
+		log.Fatal("DBPASS variable missing in .env")
 	} else {
-		eList.DBPass = db_pass.Value
+		eList.DBPass = db_pass
 	}
 
-	db_name, ok := e.Get(DBNAME)
+	db_name, ok := os.LookupEnv(DBNAME)
 	if !ok {
-		panic("DBNAME variable missing in .env")
+		log.Fatal("DBNAME variable missing in .env")
 	} else {
-		eList.DBName = db_name.Value
+		eList.DBName = db_name
 	}
 }
