@@ -65,7 +65,7 @@ func (pg *PgTaskRepository) Update(taskId int, data map[string]any) (*task.Task,
 	}
 	isCompleted, ok := data["IsCompleted"]
 	if ok {
-		setFields = append(setFields, fmt.Sprintf("is_completed=%s", isCompleted))
+		setFields = append(setFields, fmt.Sprintf("is_completed=%t", isCompleted))
 	}
 
 	if len(setFields) == 0 {

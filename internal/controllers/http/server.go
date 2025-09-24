@@ -22,7 +22,7 @@ func CreateServer(storage storages.TaskRepository) (*HttpServer, error) {
 	}
 	return &HttpServer{
 		engine:       engine,
-		routeHandler: getRouteHandler(serviceHandler),
+		routeHandler: GetRouteHandler(serviceHandler),
 	}, nil
 }
 
