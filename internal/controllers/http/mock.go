@@ -1,4 +1,4 @@
-package http
+package httpController
 
 import (
 	"fmt"
@@ -71,4 +71,8 @@ func (tr *MockRepository) Delete(taskId int) (*int, error) {
 
 func (tr *MockRepository) List() ([]entities.Task, error) {
 	return tr.tasks, nil
+}
+
+func (tr *MockRepository) Close() error {
+	return nil
 }

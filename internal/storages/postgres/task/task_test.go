@@ -128,9 +128,10 @@ func TestPgUpdate(t *testing.T) {
 		}
 		defer db.Close()
 		id, title, description := 1, "Test task", "Test task description"
-		sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(id, title, description, false, time.Now(), time.Now())
+		row := sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(id, title, description, false, time.Now(), time.Now())
 		updateTitle := "Test task (updated)"
-		row := sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(id, updateTitle, description, false, time.Now(), time.Now())
+		sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(id, updateTitle, description, false, time.Now(), time.Now())
+		mock.ExpectQuery("SELECT (.+) FROM tasks").WithArgs(id).WillReturnRows(row)
 		mock.ExpectExec("UPDATE tasks").WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectQuery("SELECT (.+) FROM tasks").WithArgs(id).WillReturnRows(row)
 		pg := NewPgTaskRepository(db)

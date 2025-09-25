@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/Arup3201/gotasks/internal/controllers/http"
+	httpController "github.com/Arup3201/gotasks/internal/controllers/http"
 	"github.com/Arup3201/gotasks/internal/storages"
 	. "github.com/Arup3201/gotasks/internal/utils"
 )
@@ -16,12 +16,11 @@ func main() {
 		log.Fatalf("Storage creation failed: %v", err)
 	}
 
-	server, err := http.CreateServer(storage)
+	err = httpController.InitServer(storage)
 	if err != nil {
 		log.Fatalf("Server create failed: %v", err)
 	}
-	server.AttachRoutes()
-	err = server.Run("localhost") // default localhost, otherwise pass the URL
+	err = httpController.Server.Run("localhost") // default localhost, otherwise pass the URL
 	if err != nil {
 		log.Fatalf("Server create failed: %v", err)
 	}

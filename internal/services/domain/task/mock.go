@@ -80,3 +80,7 @@ func (tr *mockTaskRepository) Delete(taskId int) (*int, error) {
 func (tr *mockTaskRepository) List() ([]task.Task, error) {
 	return tr.tasks, nil
 }
+
+func (tr *mockTaskRepository) Close() error {
+	return nil
+}

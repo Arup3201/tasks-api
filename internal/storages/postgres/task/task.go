@@ -108,3 +108,7 @@ func (pg *PgTaskRepository) List() ([]task.Task, error) {
 
 	return tasks, nil
 }
+
+func (pg *PgTaskRepository) Close() error {
+	return pg.db.Close()
+}
