@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	Config.Configure(".env")
+	Config.Configure()
 
 	storage, err := storages.New(storages.Postgres)
 	if err != nil {

@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 }
 
 func setUp() func() {
-	utils.Config.Configure("../../.env.test.local")
+	utils.Config.Configure()
 
 	storage, err := storages.New(storages.Postgres)
 	if err != nil {
