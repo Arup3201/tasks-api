@@ -130,10 +130,9 @@ func TestPgUpdate(t *testing.T) {
 		id, title, description := 1, "Test task", "Test task description"
 		row := sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(id, title, description, false, time.Now(), time.Now())
 		updateTitle := "Test task (updated)"
-		sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(id, updateTitle, description, false, time.Now(), time.Now())
 		mock.ExpectQuery("SELECT (.+) FROM tasks").WithArgs(id).WillReturnRows(row)
-		mock.ExpectExec("UPDATE tasks").WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectQuery("SELECT (.+) FROM tasks").WithArgs(id).WillReturnRows(row)
+		mock.ExpectExec("UPDATE tasks").WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectQuery("SELECT (.+) FROM tasks").WithArgs(id).WillReturnRows(sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(id, updateTitle, description, false, time.Now(), time.Now()))
 		pg := NewPgTaskRepository(db)
 
 		task, err := pg.Update(id, map[string]any{
@@ -159,9 +158,9 @@ func TestPgDelete(t *testing.T) {
 			t.Fatalf("sqlmock.New error: %v", err)
 		}
 		defer db.Close()
-		sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(1, "Test task 1", "Test task 1 description", false, time.Now(), time.Now()).AddRow(2, "Test task 2", "Test task 2 description", true, time.Now(), time.Now()).AddRow(3, "Test task 3", "Test task 3 description", false, time.Now(), time.Now())
-		id := 2
-		mock.ExpectExec("DELETE tasks").WithArgs(id).WillReturnResult(sqlmock.NewResult(1, 1))
+		id := 1
+		sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(id, "Test task 1", "Test task 1 description", false, time.Now(), time.Now()).AddRow(2, "Test task 2", "Test task 2 description", true, time.Now(), time.Now()).AddRow(3, "Test task 3", "Test task 3 description", false, time.Now(), time.Now())
+		mock.ExpectExec("DELETE FROM tasks").WithArgs(id).WillReturnResult(sqlmock.NewResult(0, 1))
 		pg := NewPgTaskRepository(db)
 
 		dId, err := pg.Delete(id)

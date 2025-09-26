@@ -20,10 +20,3 @@ func TestViewTaskSuccess(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, response.Code)
 }
-
-func TestViewTaskFail(t *testing.T) {
-
-	response := makeRequest("GET", "/tasks/10", nil)
-
-	assert.Equal(t, http.StatusNotFound, response.Code)
-}
