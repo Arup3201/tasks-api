@@ -1,6 +1,8 @@
-package http
+package httpController
 
 import (
+	"net/http"
+
 	"github.com/Arup3201/gotasks/internal/controllers/http/middlewares"
 	"github.com/Arup3201/gotasks/internal/services/domain/task"
 	"github.com/Arup3201/gotasks/internal/storages"
@@ -13,17 +15,23 @@ type HttpServer struct {
 	routeHandler *routeHandler
 }
 
-func CreateServer(storage storages.TaskRepository) (*HttpServer, error) {
+var Server = &HttpServer{}
+
+func InitServer(storage storages.TaskRepository) error {
 	engine := gin.Default()
 	engine.Use(middlewares.HttpErrorResponse())
+
 	serviceHandler, err := task.NewTaskService(storage)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &HttpServer{
-		engine:       engine,
-		routeHandler: getRouteHandler(serviceHandler),
-	}, nil
+
+	Server.engine = engine
+	Server.routeHandler = GetRouteHandler(serviceHandler)
+
+	Server.AttachRoutes()
+
+	return nil
 }
 
 func (server *HttpServer) AttachRoutes() {
@@ -33,6 +41,10 @@ func (server *HttpServer) AttachRoutes() {
 	server.engine.PATCH("/tasks/:id", server.routeHandler.UpdateTask)
 	server.engine.DELETE("/tasks/:id", server.routeHandler.DeleteTask)
 	server.engine.GET("/search/tasks", server.routeHandler.SearchTasks)
+}
+
+func (server *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	server.engine.ServeHTTP(w, r)
 }
 
 func (server *HttpServer) Run(host string) error {

@@ -1,4 +1,4 @@
-package http
+package httpController
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ type routeHandler struct {
 	serviceHandler services.ServiceHandler
 }
 
-func getRouteHandler(handler services.ServiceHandler) *routeHandler {
+func GetRouteHandler(handler services.ServiceHandler) *routeHandler {
 	return &routeHandler{
 		serviceHandler: handler,
 	}

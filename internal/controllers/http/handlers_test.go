@@ -1,4 +1,4 @@
-package http
+package httpController
 
 import (
 	"encoding/json"
@@ -49,7 +49,7 @@ func TestGetTasks(t *testing.T) {
 			},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		request, _ := http.NewRequest("GET", "/tasks", nil)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
@@ -72,7 +72,7 @@ func TestGetTasks(t *testing.T) {
 			tasks: []entities.Task{},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		request, _ := http.NewRequest("GET", "/tasks", nil)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
@@ -100,7 +100,7 @@ func TestAddTask(t *testing.T) {
 			tasks: []entities.Task{},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		payload := strings.NewReader(`{
 			"title": "Test task", 
 			"description": "Test description"
@@ -148,7 +148,7 @@ func TestAddTask(t *testing.T) {
 			},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		payload := strings.NewReader(`{
 			"title": "Test task", 
 			"description": "Test description"
@@ -176,7 +176,7 @@ func TestAddTask(t *testing.T) {
 			tasks: []entities.Task{},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		payload := strings.NewReader(`{
 			"description": "Test description"
 		}`)
@@ -219,7 +219,7 @@ func TestGetTask(t *testing.T) {
 			},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		request, _ := http.NewRequest("GET", "/tasks/2", nil)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
@@ -259,7 +259,7 @@ func TestGetTask(t *testing.T) {
 			},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		request, _ := http.NewRequest("GET", "/tasks/3", nil)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
@@ -298,7 +298,7 @@ func TestUpdateTask(t *testing.T) {
 			},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		payload := strings.NewReader(`{
 			"title": "Test 2 (edited)"
 		}`)
@@ -341,7 +341,7 @@ func TestUpdateTask(t *testing.T) {
 			},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		payload := strings.NewReader(`{
 			"description": "Test 2 description (edited)"
 		}`)
@@ -384,7 +384,7 @@ func TestUpdateTask(t *testing.T) {
 			},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		payload := strings.NewReader(`{
 			"is_completed": true
 		}`)
@@ -427,7 +427,7 @@ func TestUpdateTask(t *testing.T) {
 			},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		payload := strings.NewReader(`{
 			"title": "Test 3 (edited)"
 		}`)
@@ -466,7 +466,7 @@ func TestUpdateTask(t *testing.T) {
 			},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		payload := strings.NewReader(`{}`)
 		request, _ := http.NewRequest("PATCH", "/tasks/3", payload)
 		response := httptest.NewRecorder()
@@ -506,7 +506,7 @@ func TestDeleteTask(t *testing.T) {
 			},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		request, _ := http.NewRequest("DELETE", "/tasks/2", nil)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
@@ -545,7 +545,7 @@ func TestDeleteTask(t *testing.T) {
 			},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		request, _ := http.NewRequest("DELETE", "/tasks/3", nil)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
@@ -592,7 +592,7 @@ func TestSearchTasks(t *testing.T) {
 			},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		request, _ := http.NewRequest("GET", "/search/tasks?q=2", nil)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
@@ -640,7 +640,7 @@ func TestSearchTasks(t *testing.T) {
 			},
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
-		routeHandler := getRouteHandler(serviceHandler)
+		routeHandler := GetRouteHandler(serviceHandler)
 		request, _ := http.NewRequest("GET", "/search/tasks?q=3", nil)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
