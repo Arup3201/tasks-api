@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"testing"
 
+	httpController "github.com/Arup3201/gotasks/internal/controllers/http"
 	entities "github.com/Arup3201/gotasks/internal/entities/task"
 	"github.com/stretchr/testify/assert"
 )
@@ -68,6 +69,7 @@ func TestAddTaskCheck(t *testing.T) {
 	cleanDB()
 }
 
+// check after adding a new task to the list of 2 tasks, the new task id is 3 and the task has correct content
 func TestAddAndViewTask(t *testing.T) {
 	// prepare
 	prepareDBTasks(2)
@@ -105,5 +107,166 @@ func TestAddAndViewTask(t *testing.T) {
 	assert.NotZero(t, responseTask.CreatedAt)
 	assert.NotZero(t, responseTask.UpdatedAt)
 
+	cleanDB()
+}
+
+// check if I try to access wrong task then I get correct NotFound response body
+func TestViewInvalidTaskNotFoundError(t *testing.T) {
+	// prepare
+	prepareDBTasks(2)
+	expectedErrorCode := 404
+	expectedBody := map[string]any{
+		"id":     "NOT_FOUND",
+		"title":  "Not found",
+		"status": 404,
+	}
+
+	// act
+	response := makeRequest("GET", "/tasks/3", nil)
+
+	// assert
+	assert.Equal(t, expectedErrorCode, response.Code)
+
+	var responseError httpController.HttpError
+	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
+		log.Fatalf("JSON decoder error: %v", err)
+	}
+
+	assert.Equal(t, expectedBody["id"], responseError.Id)
+	assert.Equal(t, expectedBody["title"], responseError.Title)
+	assert.Equal(t, expectedBody["status"], responseError.Status)
+	cleanDB()
+}
+
+// check adding a task with missing title and receiving the correct bad request response error body
+func TestAddTaskWithMissingTitle(t *testing.T) {
+	// prepare
+	prepareDBTasks(2)
+	description := fmt.Sprintf("description - %d", rand.Intn(9999))
+	task := httpController.CreateTask{
+		Description: &description,
+	}
+	expectedErrorCode := 400
+	expectedBody := map[string]any{
+		"id":     "MISSING_BODY_PROPERTY",
+		"title":  "Missing body property",
+		"status": 400,
+		"field":  "title",
+	}
+
+	// act
+	response := makeRequest("POST", "/tasks", task)
+
+	// assert
+	assert.Equal(t, expectedErrorCode, response.Code)
+
+	var responseError httpController.HttpError
+	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
+		log.Fatalf("JSON decoder error: %v", err)
+	}
+
+	assert.Equal(t, expectedBody["id"], responseError.Id)
+	assert.Equal(t, expectedBody["title"], responseError.Title)
+	assert.Equal(t, expectedBody["status"], responseError.Status)
+	assert.Equal(t, expectedBody["field"], responseError.Errors[0].Field)
+	cleanDB()
+}
+
+// check adding a task with missing description and receiving the correct bad request response error body
+func TestAddTaskWithMissingDescription(t *testing.T) {
+	// prepare
+	prepareDBTasks(2)
+	title := fmt.Sprintf("title - %d", rand.Intn(9999))
+	task := httpController.CreateTask{
+		Title: &title,
+	}
+	expectedErrorCode := 400
+	expectedBody := map[string]any{
+		"id":     "MISSING_BODY_PROPERTY",
+		"title":  "Missing body property",
+		"status": 400,
+		"field":  "description",
+	}
+
+	// act
+	response := makeRequest("POST", "/tasks", task)
+
+	// assert
+	assert.Equal(t, expectedErrorCode, response.Code)
+
+	var responseError httpController.HttpError
+	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
+		log.Fatalf("JSON decoder error: %v", err)
+	}
+
+	assert.Equal(t, expectedBody["id"], responseError.Id)
+	assert.Equal(t, expectedBody["title"], responseError.Title)
+	assert.Equal(t, expectedBody["status"], responseError.Status)
+	assert.Equal(t, expectedBody["field"], responseError.Errors[0].Field)
+	cleanDB()
+}
+
+// check adding a task with empty title and receiving the correct bad request response error body
+func TestAddTaskEmptyTitleError(t *testing.T) {
+	// prepare
+	prepareDBTasks(2)
+	title := ""
+	description := fmt.Sprintf("description - %d", rand.Intn(9999))
+	task := httpController.CreateTask{
+		Title:       &title,
+		Description: &description,
+	}
+	expectedErrorCode := 400
+	expectedBody := map[string]any{
+		"id":     "INVALID_BODY_PROPERTY",
+		"title":  "Invalid body property value",
+		"status": 400,
+		"field":  "title",
+	}
+
+	// act
+	response := makeRequest("POST", "/tasks", task)
+
+	// assert
+	assert.Equal(t, expectedErrorCode, response.Code)
+
+	var responseError httpController.HttpError
+	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
+		log.Fatalf("JSON decoder error: %v", err)
+	}
+
+	assert.Equal(t, expectedBody["id"], responseError.Id)
+	assert.Equal(t, expectedBody["title"], responseError.Title)
+	assert.Equal(t, expectedBody["status"], responseError.Status)
+	assert.Equal(t, expectedBody["field"], responseError.Errors[0].Field)
+	cleanDB()
+}
+
+func TestViewIdParamInvalidError(t *testing.T) {
+	// prepare
+	prepareDBTasks(2)
+	expectedErrorCode := 400
+	expectedBody := map[string]any{
+		"id":     "INVALID_PARAMETER_VALUE",
+		"title":  "Invalid request parameter value",
+		"status": 400,
+		"field":  "id",
+	}
+
+	// act
+	response := makeRequest("GET", "/tasks/asd", nil)
+
+	// assert
+	assert.Equal(t, expectedErrorCode, response.Code)
+
+	var responseError httpController.HttpError
+	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
+		log.Fatalf("JSON decoder error: %v", err)
+	}
+
+	assert.Equal(t, expectedBody["id"], responseError.Id)
+	assert.Equal(t, expectedBody["title"], responseError.Title)
+	assert.Equal(t, expectedBody["status"], responseError.Status)
+	assert.Equal(t, expectedBody["field"], responseError.Errors[0].Field)
 	cleanDB()
 }

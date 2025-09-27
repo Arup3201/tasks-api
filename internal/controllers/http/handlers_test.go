@@ -189,7 +189,7 @@ func TestAddTask(t *testing.T) {
 
 		engine.ServeHTTP(response, ctx.Request)
 
-		want := BadRequest
+		want := http.StatusBadRequest
 		if got := response.Result().StatusCode; got != want {
 			t.Errorf("expected status code %d but got %d", want, got)
 		}
@@ -268,7 +268,7 @@ func TestGetTask(t *testing.T) {
 
 		engine.ServeHTTP(response, ctx.Request)
 
-		want := NotFound
+		want := http.StatusNotFound
 		if got := response.Result().StatusCode; got != want {
 			t.Errorf("should return NotFound error, expected status code %d but got %d", want, got)
 		}
@@ -439,7 +439,7 @@ func TestUpdateTask(t *testing.T) {
 
 		engine.ServeHTTP(response, ctx.Request)
 
-		want := NotFound
+		want := http.StatusNotFound
 		if got := response.Result().StatusCode; got != want {
 			t.Errorf("expected NotFound error, expected status code %d but got %d", want, got)
 		}
@@ -476,7 +476,7 @@ func TestUpdateTask(t *testing.T) {
 
 		engine.ServeHTTP(response, ctx.Request)
 
-		want := NoOp
+		want := http.StatusNotModified
 		if got := response.Result().StatusCode; got != want {
 			t.Errorf("expected NoOp response, expected status code %d but got %d", want, got)
 		}
@@ -554,7 +554,7 @@ func TestDeleteTask(t *testing.T) {
 
 		engine.ServeHTTP(response, ctx.Request)
 
-		want := NotFound
+		want := http.StatusNotFound
 		if got := response.Result().StatusCode; got != want {
 			t.Errorf("expected NotFound error %d, but got %d", want, got)
 		}

@@ -3,11 +3,22 @@ package httpController
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/Arup3201/gotasks/internal/errors"
 )
 
+const (
+	NOOP         = "NO_MODIFICATION"
+	MISSINGBODY  = "MISSING_BODY_PROPERTY"
+	INVALIDBODY  = "INVALID_BODY_PROPERTY"
+	INVALIDPARAM = "INVALID_PARAMETER_VALUE"
+	NOTFOUND     = "NOT_FOUND"
+	SERVERERROR  = "SERVER_ERROR"
+)
+
 type BaseError struct {
+	Id     string `json:"id"`
 	Type   string `json:"type"`
 	Title  string `json:"title"`
 	Detail string `json:"detail"`
@@ -49,9 +60,10 @@ func (e *HttpError) ResponseHeader() (int, map[string]string) {
 	}
 }
 
-func New(errType string, title string, detail string, status int, code string, cause error, fields ...ErrorField) *HttpError {
+func New(errId string, errType string, title string, detail string, status int, code string, cause error, fields ...ErrorField) *HttpError {
 	return &HttpError{
 		BaseError: BaseError{
+			Id:     errId,
 			Type:   errType,
 			Title:  title,
 			Detail: detail,
@@ -65,7 +77,14 @@ func New(errType string, title string, detail string, status int, code string, c
 
 func FromAppError(appError *errors.AppError) *HttpError {
 	if appError.Type == errors.INVALID_INPUT {
-		return InvalidBodyError()
+		fields := []ErrorField{}
+		for _, errorField := range appError.Errors {
+			fields = append(fields, ErrorField{
+				Field:  errorField.Field,
+				Reason: errorField.Reason,
+			})
+		}
+		return InvalidBodyError(fields...)
 	}
 	if appError.Type == errors.NOT_FOUND {
 		return NotFoundError()
@@ -77,20 +96,13 @@ func FromAppError(appError *errors.AppError) *HttpError {
 	return InternalServerError(appError.Cause)
 }
 
-// helpers
-const (
-	NoOp        = 204
-	BadRequest  = 400
-	NotFound    = 404
-	ServerError = 500
-)
-
 func InvalidBodyError(fields ...ErrorField) *HttpError {
 	return New(
+		INVALIDBODY,
 		"https://problems-registry.smartbear.com/invalid-body-property-value",
-		"Invalid Body Property Value",
+		"Invalid body property value",
 		"The request body contains an invalid body property value.",
-		BadRequest,
+		http.StatusBadRequest,
 		"400-07",
 		nil,
 		fields...,
@@ -99,10 +111,11 @@ func InvalidBodyError(fields ...ErrorField) *HttpError {
 
 func MissingBodyError(fields ...ErrorField) *HttpError {
 	return New(
+		MISSINGBODY,
 		"https://problems-registry.smartbear.com/missing-body-property",
 		"Missing body property",
 		"The request is missing an expected body property.",
-		BadRequest,
+		http.StatusBadRequest,
 		"400-09",
 		nil,
 		fields...,
@@ -111,10 +124,11 @@ func MissingBodyError(fields ...ErrorField) *HttpError {
 
 func InvalidRequestParamError(fields ...ErrorField) *HttpError {
 	return New(
+		INVALIDPARAM,
 		"https://problems-registry.smartbear.com/invalid-request-parameter-value",
-		"Invalid Request Parameter Value",
+		"Invalid request parameter value",
 		"The request body contains an invalid request parameter value.",
-		BadRequest,
+		http.StatusBadRequest,
 		"400-08",
 		nil,
 		fields...,
@@ -123,10 +137,11 @@ func InvalidRequestParamError(fields ...ErrorField) *HttpError {
 
 func NotFoundError() *HttpError {
 	return New(
+		NOTFOUND,
 		"https://problems-registry.smartbear.com/not-found",
-		"Not Found",
+		"Not found",
 		"The requested resource was not found",
-		NotFound,
+		http.StatusNotFound,
 		"404-01",
 		nil,
 	)
@@ -134,10 +149,11 @@ func NotFoundError() *HttpError {
 
 func NoOpError() *HttpError {
 	return New(
+		NOOP,
 		"about:blank",
-		"Not Modified",
+		"Not modified",
 		"No modification happened at server",
-		NoOp,
+		http.StatusNotModified,
 		"204-01",
 		nil,
 	)
@@ -145,10 +161,11 @@ func NoOpError() *HttpError {
 
 func InternalServerError(cause error) *HttpError {
 	return New(
+		SERVERERROR,
 		"https://problems-registry.smartbear.com/server-error",
-		"Server Error",
+		"Internal server error",
 		"The server encountered an unexpected error",
-		ServerError,
+		http.StatusInternalServerError,
 		"500-01",
 		cause,
 	)

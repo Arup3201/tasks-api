@@ -42,6 +42,7 @@ func setUp() func() {
 	controllers.InitServer(storage)
 
 	return func() {
+		cleanDB()
 		storage.Close()
 	}
 }

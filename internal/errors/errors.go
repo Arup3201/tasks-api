@@ -11,14 +11,21 @@ type AppError struct {
 	Title  string
 	Detail string
 	Cause  error
+	Errors []AppErrorField
 }
 
-func New(type_, title, detail string, cause error) *AppError {
+type AppErrorField struct {
+	Field  string
+	Reason string
+}
+
+func New(type_, title, detail string, cause error, fields ...AppErrorField) *AppError {
 	return &AppError{
 		Type:   type_,
 		Title:  title,
 		Detail: detail,
 		Cause:  cause,
+		Errors: fields,
 	}
 }
 
@@ -29,8 +36,8 @@ func (e *AppError) Error() string {
 	return e.Detail
 }
 
-func InputValidationError(title, detail string) *AppError {
-	return New(INVALID_INPUT, title, detail, nil)
+func InputValidationError(title, detail string, fields ...AppErrorField) *AppError {
+	return New(INVALID_INPUT, title, detail, nil, fields...)
 }
 
 func NotFoundError(detail string) *AppError {
