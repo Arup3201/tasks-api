@@ -34,7 +34,7 @@ func TestViewAllTasksSuccess(t *testing.T) {
 }
 
 // check tasks increase to 11 after adding a new task
-func TestAddTaskCheck(t *testing.T) {
+func TestAddTaskCheckSuccess(t *testing.T) {
 	// prepare
 	prepareDBTasks(2)
 	task := entities.Task{
@@ -70,7 +70,7 @@ func TestAddTaskCheck(t *testing.T) {
 }
 
 // check after adding a new task to the list of 2 tasks, the new task id is 3 and the task has correct content
-func TestAddAndViewTask(t *testing.T) {
+func TestAddAndViewTaskSuccess(t *testing.T) {
 	// prepare
 	prepareDBTasks(2)
 	task := entities.Task{
@@ -111,7 +111,7 @@ func TestAddAndViewTask(t *testing.T) {
 }
 
 // check if I try to access wrong task then I get correct NotFound response body
-func TestViewInvalidTaskNotFoundError(t *testing.T) {
+func TestViewInvalidTaskFail(t *testing.T) {
 	// prepare
 	prepareDBTasks(2)
 	expectedErrorCode := 404
@@ -139,7 +139,7 @@ func TestViewInvalidTaskNotFoundError(t *testing.T) {
 }
 
 // check adding a task with missing title and receiving the correct bad request response error body
-func TestAddTaskWithMissingTitle(t *testing.T) {
+func TestAddTaskWithMissingTitleFail(t *testing.T) {
 	// prepare
 	prepareDBTasks(2)
 	description := fmt.Sprintf("description - %d", rand.Intn(9999))
@@ -173,7 +173,7 @@ func TestAddTaskWithMissingTitle(t *testing.T) {
 }
 
 // check adding a task with missing description and receiving the correct bad request response error body
-func TestAddTaskWithMissingDescription(t *testing.T) {
+func TestAddTaskWithMissingDescriptionFail(t *testing.T) {
 	// prepare
 	prepareDBTasks(2)
 	title := fmt.Sprintf("title - %d", rand.Intn(9999))
@@ -207,7 +207,7 @@ func TestAddTaskWithMissingDescription(t *testing.T) {
 }
 
 // check adding a task with empty title and receiving the correct bad request response error body
-func TestAddTaskEmptyTitleError(t *testing.T) {
+func TestAddTaskEmptyTitleFail(t *testing.T) {
 	// prepare
 	prepareDBTasks(2)
 	title := ""
@@ -242,7 +242,44 @@ func TestAddTaskEmptyTitleError(t *testing.T) {
 	cleanDB()
 }
 
-func TestViewIdParamInvalidError(t *testing.T) {
+// check adding a task with empty description and receiving the correct bad request response error body
+func TestAddTaskEmptyDescriptionFail(t *testing.T) {
+	// prepare
+	prepareDBTasks(2)
+	title := fmt.Sprintf("title - %d", rand.Intn(9999))
+	description := ""
+	task := httpController.CreateTask{
+		Title:       &title,
+		Description: &description,
+	}
+	expectedErrorCode := 400
+	expectedBody := map[string]any{
+		"id":     "INVALID_BODY_PROPERTY",
+		"title":  "Invalid body property value",
+		"status": 400,
+		"field":  "description",
+	}
+
+	// act
+	response := makeRequest("POST", "/tasks", task)
+
+	// assert
+	assert.Equal(t, expectedErrorCode, response.Code)
+
+	var responseError httpController.HttpError
+	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
+		log.Fatalf("JSON decoder error: %v", err)
+	}
+
+	assert.Equal(t, expectedBody["id"], responseError.Id)
+	assert.Equal(t, expectedBody["title"], responseError.Title)
+	assert.Equal(t, expectedBody["status"], responseError.Status)
+	assert.Equal(t, expectedBody["field"], responseError.Errors[0].Field)
+	cleanDB()
+}
+
+// check if non-integer id gives invalid param error response
+func TestViewIdParamInvalidFail(t *testing.T) {
 	// prepare
 	prepareDBTasks(2)
 	expectedErrorCode := 400
