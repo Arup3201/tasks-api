@@ -128,3 +128,7 @@ func (ts *TaskService) SearchTasks(query string) ([]task.Task, error) {
 
 	return matches, nil
 }
+
+func (ts *TaskService) UpdateLastInsertedId(lastInsertedId int) {
+	ts.lastTaskId = lastInsertedId
+}

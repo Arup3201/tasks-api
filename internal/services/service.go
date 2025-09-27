@@ -15,4 +15,5 @@ type ServiceHandler interface {
 	UpdateTask(taskId int, data UpdateTaskData) (*task.Task, error)
 	DeleteTask(taskId int) (*int, error)
 	SearchTasks(query string) ([]task.Task, error)
+	UpdateLastInsertedId(lastInsertedId int) // setter funtion
 }
