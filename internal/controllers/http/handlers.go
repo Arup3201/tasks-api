@@ -50,14 +50,14 @@ func (handler *routeHandler) AddTask(c *gin.Context) {
 	if payload.Title == nil {
 		c.Error(MissingBodyError(ErrorField{
 			Field:  "title",
-			Reason: "Task title is required",
+			Reason: "Task 'title' is required",
 		}))
 		return
 	}
 	if payload.Description == nil {
 		c.Error(MissingBodyError(ErrorField{
-			Field:  "title",
-			Reason: "Task title is required",
+			Field:  "description",
+			Reason: "Task 'description' is required",
 		}))
 		return
 	}

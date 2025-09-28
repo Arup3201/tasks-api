@@ -29,11 +29,17 @@ func NewTaskService(repo storages.TaskRepository) (*TaskService, error) {
 
 func (ts *TaskService) CreateTask(title, description string) (*task.Task, error) {
 	if strings.TrimSpace(title) == "" {
-		return nil, errors.InputValidationError("Invalid task 'title'", "Task property 'title' can't be empty")
+		return nil, errors.InputValidationError("Invalid task value", "Task property 'title' is invalid", errors.AppErrorField{
+			Field:  "title",
+			Reason: "Task 'title' can't be empty",
+		})
 	}
 
 	if strings.TrimSpace(description) == "" {
-		return nil, errors.InputValidationError("Invalid task 'description'", "Task property 'description' can't be empty")
+		return nil, errors.InputValidationError("Invalid task value", "Task property 'description' is invalid", errors.AppErrorField{
+			Field:  "description",
+			Reason: "Task 'description' can't be empty",
+		})
 	}
 
 	task, err := ts.taskRepository.Insert(ts.lastTaskId+1, title, description)
@@ -127,4 +133,8 @@ func (ts *TaskService) SearchTasks(query string) ([]task.Task, error) {
 	}
 
 	return matches, nil
+}
+
+func (ts *TaskService) UpdateLastInsertedId(lastInsertedId int) {
+	ts.lastTaskId = lastInsertedId
 }
