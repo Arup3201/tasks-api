@@ -1,14 +1,25 @@
-FROM golang:1.25
+# syntax=docker/dockerfile:1
 
-WORKDIR /usr/src/app
+# build-stage
+FROM golang:1.25 AS build-stage
+
+WORKDIR /app
 
 COPY go.mod go.sum ./
+
 RUN go mod download
 
-COPY ./ ./
-RUN go build -o /usr/local/bin/app
+COPY . ./
 
-RUN useradd app
-USER app
+RUN CGO_ENABLED=0 GOOS=linux go build -o /tasks-api
 
-CMD ["app"]
+# build-release-stage
+FROM gcr.io/distroless/base-debian11 AS build-release-stage
+
+COPY --from=build-stage /tasks-api /tasks-api
+
+EXPOSE 8080
+
+USER nonroot:nonroot
+
+ENTRYPOINT [ "/tasks-api" ]

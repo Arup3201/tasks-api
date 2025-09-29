@@ -7,7 +7,6 @@ import (
 )
 
 const (
-	PORT   = "PORT"
 	DBHOST = "DBHOST"
 	DBUSER = "DBUSER"
 	DBPORT = "DBPORT"
@@ -15,7 +14,7 @@ const (
 	DBNAME = "DBNAME"
 )
 
-const defaultPort = "80"
+const defaultPort = "8080"
 const defaultDBPort = "5432"
 
 type envList struct {
@@ -30,12 +29,7 @@ type envList struct {
 var Config = &envList{}
 
 func (eList *envList) Configure() {
-	port, ok := os.LookupEnv(PORT)
-	if !ok {
-		eList.Port = defaultPort
-	} else {
-		eList.Port = port
-	}
+	eList.Port = defaultPort
 
 	db_host, ok := os.LookupEnv(DBHOST)
 	if !ok {
