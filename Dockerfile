@@ -19,8 +19,3 @@ FROM gcr.io/distroless/base-debian11 AS build-release-stage
 COPY --from=build-stage /tasks-api /tasks-api
 
 EXPOSE 8080
-
-USER nonroot:nonroot
-
-ENTRYPOINT [ "/tasks-api" ]
-

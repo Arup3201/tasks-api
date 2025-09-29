@@ -14,7 +14,7 @@ const (
 	DBNAME = "DBNAME"
 )
 
-const defaultPort = "80"
+const defaultPort = "8080"
 const defaultDBPort = "5432"
 
 type envList struct {
