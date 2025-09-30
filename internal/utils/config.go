@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"log"
 	"os"
-
-	"github.com/joho/godotenv"
 )
 
 const (
-	PORT   = "PORT"
 	DBHOST = "DBHOST"
 	DBUSER = "DBUSER"
 	DBPORT = "DBPORT"
@@ -31,29 +28,19 @@ type envList struct {
 
 var Config = &envList{}
 
-func (eList *envList) Configure(filename string) {
-	err := godotenv.Load(filename)
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
-	port, ok := os.LookupEnv(PORT)
-	if !ok {
-		eList.Port = defaultPort
-	} else {
-		eList.Port = port
-	}
+func (eList *envList) Configure() {
+	eList.Port = defaultPort
 
 	db_host, ok := os.LookupEnv(DBHOST)
 	if !ok {
-		log.Fatal("DBHOST variable missing in .env")
+		log.Fatal("DBHOST variable missing in environment variables")
 	} else {
 		eList.DBHost = db_host
 	}
 
 	db_user, ok := os.LookupEnv(DBUSER)
 	if !ok {
-		log.Fatal("DBUSER variable missing in .env")
+		log.Fatal("DBUSER variable missing in environment variables")
 	} else {
 		eList.DBUser = db_user
 	}
@@ -68,14 +55,14 @@ func (eList *envList) Configure(filename string) {
 
 	db_pass, ok := os.LookupEnv(DBPASS)
 	if !ok {
-		log.Fatal("DBPASS variable missing in .env")
+		log.Fatal("DBPASS variable missing in environment variables")
 	} else {
 		eList.DBPass = db_pass
 	}
 
 	db_name, ok := os.LookupEnv(DBNAME)
 	if !ok {
-		log.Fatal("DBNAME variable missing in .env")
+		log.Fatal("DBNAME variable missing in environment variables")
 	} else {
 		eList.DBName = db_name
 	}

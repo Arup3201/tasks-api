@@ -3,6 +3,7 @@ package storages
 import (
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/Arup3201/gotasks/internal/entities/task"
 	postgres "github.com/Arup3201/gotasks/internal/storages/postgres/task"
@@ -22,6 +23,19 @@ func New(dbType string) (TaskRepository, error) {
 		if err != nil {
 			return nil, fmt.Errorf("sql.Open error: %v", err)
 		}
+
+		_, err = db.Exec(`CREATE TABLE IF NOT EXISTS tasks(
+								id INT PRIMARY KEY,
+								title TEXT NOT NULL, 
+								description TEXT NOT NULL, 
+								is_completed BOOLEAN NOT NULL, 
+								created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+								updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+							)`)
+		if err != nil {
+			log.Fatalf("Table create error: %v", err)
+		}
+
 		repo = postgres.NewPgTaskRepository(db)
 	default:
 		// in-memory

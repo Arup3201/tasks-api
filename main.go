@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	Config.Configure(".env")
+	Config.Configure()
 
 	storage, err := storages.New(storages.Postgres)
 	if err != nil {
@@ -20,7 +20,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Server create failed: %v", err)
 	}
-	err = httpController.Server.Run("localhost") // default localhost, otherwise pass the URL
+	err = httpController.Server.Run("0.0.0.0")
 	if err != nil {
 		log.Fatalf("Server create failed: %v", err)
 	}
