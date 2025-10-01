@@ -153,7 +153,7 @@ func NoOpError() *HttpError {
 		"about:blank",
 		"Not modified",
 		"No modification happened at server",
-		http.StatusNotModified,
+		http.StatusNoContent,
 		"204-01",
 		nil,
 	)

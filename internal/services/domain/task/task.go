@@ -75,7 +75,10 @@ func (ts *TaskService) UpdateTask(taskId int, data services.UpdateTaskData) (*ta
 	if data.Title != nil {
 		if strings.TrimSpace(*data.Title) == "" {
 			return nil, errors.InputValidationError("Invalid task 'title'",
-				"Task 'title' value can't be empty")
+				"Task 'title' value can't be empty", errors.AppErrorField{
+					Field:  "title",
+					Reason: "Task 'title' can't be empty",
+				})
 		}
 		update["Title"] = *data.Title
 	}
@@ -83,7 +86,10 @@ func (ts *TaskService) UpdateTask(taskId int, data services.UpdateTaskData) (*ta
 	if data.Description != nil {
 		if strings.TrimSpace(*data.Description) == "" {
 			return nil, errors.InputValidationError("Invalid task 'description'",
-				"Task 'description' value can't be empty")
+				"Task 'description' value can't be empty", errors.AppErrorField{
+					Field:  "description",
+					Reason: "Task 'description' can't be empty",
+				})
 		}
 		update["Description"] = *data.Description
 	}
