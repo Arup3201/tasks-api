@@ -177,20 +177,20 @@ func TestPgDelete(t *testing.T) {
 			t.Errorf("there were unfulfilled expectations: %s", err)
 		}
 	})
-	t.Run("delete am invalid task fail", func(t *testing.T) {
+	t.Run("delete an invalid task fail", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		if err != nil {
 			t.Fatalf("sqlmock.New error: %v", err)
 		}
 		defer db.Close()
 		id := 4
-		sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(id, "Test task 1", "Test task 1 description", false, time.Now(), time.Now()).AddRow(2, "Test task 2", "Test task 2 description", true, time.Now(), time.Now()).AddRow(3, "Test task 3", "Test task 3 description", false, time.Now(), time.Now())
+		sqlmock.NewRows([]string{"id", "title", "description", "is_completed", "created_at", "updated_at"}).AddRow(1, "Test task 1", "Test task 1 description", false, time.Now(), time.Now()).AddRow(2, "Test task 2", "Test task 2 description", true, time.Now(), time.Now()).AddRow(3, "Test task 3", "Test task 3 description", false, time.Now(), time.Now())
 		mock.ExpectExec("DELETE FROM tasks").WithArgs(id).WillReturnResult(sqlmock.NewResult(0, 0))
 		pg := NewPgTaskRepository(db)
 
 		_, err = pg.Delete(id)
 
-		if err != nil {
+		if err == nil {
 			t.Errorf("expected not found error, but got no error")
 		}
 		if _, ok := err.(*errors.AppError); !ok {
