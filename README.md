@@ -16,7 +16,6 @@ It will start the server at port `8080`, and then you can perform any of the fol
 - `GET /tasks`: Get list of tasks
 - `GET /tasks/:id`: Get a task with ID `id`
 - `POST /tasks`: Create a new task
-- `PUT /tasks/:id`: Edit a task with ID `id` by providing `title` and `description`
-- `PUT /tasks/:id/mark`: Mark a task as done/undone by providing `completed` as true/false
+- `PATCH /tasks/:id`: Edit a task with ID `id` by providing `title`, `description`, `is_completed`
 - `DELETE /tasks/:id`: Delete a task with ID `id`
 - `GET /search/tasks?q=query`: Search tasks with title `query`
