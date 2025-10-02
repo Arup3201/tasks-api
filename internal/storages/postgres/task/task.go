@@ -82,11 +82,13 @@ func (pg *PgTaskRepository) Update(taskId int, data map[string]any) (*task.Task,
 }
 
 func (pg *PgTaskRepository) Delete(taskId int) (*int, error) {
-	_, err := pg.db.Exec("DELETE FROM tasks WHERE id=($1)", taskId)
+	res, err := pg.db.Exec("DELETE FROM tasks WHERE id=($1)", taskId)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
-		}
+		return nil, err
+	}
+
+	if n, _ := res.RowsAffected(); n == 0 {
+		return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
 	}
 
 	return &taskId, nil
