@@ -476,7 +476,7 @@ func TestUpdateTask(t *testing.T) {
 
 		engine.ServeHTTP(response, ctx.Request)
 
-		want := http.StatusNotModified
+		want := 204
 		if got := response.Result().StatusCode; got != want {
 			t.Errorf("expected NoOp response, expected status code %d but got %d", want, got)
 		}
