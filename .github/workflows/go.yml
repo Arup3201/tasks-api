@@ -10,9 +10,8 @@ on:
     branches: [ "main" ]
 
 jobs:
-  container-job:
+  runner-job:
     runs-on: ubuntu-latest
-    container: node:20-bookworm-slim
 
     services:
       postgres:
@@ -25,9 +24,12 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          - 5432:5432
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Check out repository code
+      uses: actions/checkout@v4
     
     - name: Setup Go 1.25.x
       uses: actions/setup-go@v4
@@ -41,7 +43,7 @@ jobs:
       run: go test -v ./...
       
       env:
-          DBHOST: postgres
+          DBHOST: localhost
           DBUSER: postgres
           DBPORT: 5432
           DBPASS: 1234
