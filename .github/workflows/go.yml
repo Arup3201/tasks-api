@@ -44,7 +44,7 @@ jobs:
       
       env:
           DBHOST: localhost
-          DBUSER: postgres
+          DBUSER: $POSTGRES_USER
           DBPORT: 5432
           DBPASS: $POSTGRES_PASSWORD
           DBNAME: tests
