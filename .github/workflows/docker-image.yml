@@ -10,20 +10,13 @@
 name: Publish Docker image
 
 on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
+  release:
+    types: [published]
 
 jobs:
   publish-image-job:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    env:
-      IMG_NAME: arupjana/tasks-api
 
     steps:
       - 
@@ -36,9 +29,6 @@ jobs:
           username: ${{ vars.DOCKER_USERNAME }}
           password: ${{ vars.DOCKER_PASSWORD }}
       -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       -
@@ -47,4 +37,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: arupjana/tasks-api:latest
+          tags: arupjana/tasks-api:${{ github.ref_name }}
