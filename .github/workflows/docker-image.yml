@@ -19,6 +19,9 @@ jobs:
   publish-image-job:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     env:
       IMG_NAME: arupjana/tasks-api
 
