@@ -15,7 +15,7 @@ const (
 	KEYCLOAK_JWT_URL = "KEYCLOAK_JWT_URL"
 )
 
-const defaultPort = "8080"
+const defaultPort = "8086"
 const defaultDBPort = "5432"
 
 type envList struct {

@@ -2,37 +2,38 @@ package middlewares
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 
+	httperrors "github.com/Arup3201/gotasks/internal/controllers/http/errors"
 	"github.com/Arup3201/gotasks/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
 )
 
-type middlewareCallback func() gin.HandlerFunc
-
-func Authenticate(secureEndpoints []string) middlewareCallback {
-	return func() gin.HandlerFunc {
-		return func(c *gin.Context) {
-			for _, endpoint := range secureEndpoints {
-				if strings.Index(c.Request.URL.Path, endpoint) == 0 {
-					token, err := verifyToken(c.Request)
-					if err != nil {
-						c.IndentedJSON(http.StatusBadRequest, gin.H{"reason": err.Error()})
-					}
-					if token != nil {
-						c.Next()
-					} else {
-						c.IndentedJSON(http.StatusForbidden, gin.H{"message": "Not authenticated"})
-					}
+func Authenticate(secureEndpoints []string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		for _, endpoint := range secureEndpoints {
+			if strings.Index(c.Request.URL.Path, endpoint) == 0 {
+				token, err := verifyToken(c.Request)
+				if err != nil {
+					log.Printf("authentication error: %v", err)
+					c.Error(httperrors.UnauthorizedError())
 					return
 				}
+				if token != nil {
+					c.Next()
+				} else {
+					log.Printf("authentication error: invalid token")
+					c.Error(httperrors.UnauthorizedError())
+				}
+				return
 			}
-
-			c.Next()
 		}
+
+		c.Next()
 	}
 }
 

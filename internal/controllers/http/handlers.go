@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	httperrors "github.com/Arup3201/gotasks/internal/controllers/http/errors"
 	"github.com/Arup3201/gotasks/internal/errors"
 	"github.com/Arup3201/gotasks/internal/services"
 	"github.com/gin-gonic/gin"
@@ -30,9 +31,9 @@ func (handler *routeHandler) GetTasks(c *gin.Context) {
 	if err != nil {
 		appError, ok := err.(*errors.AppError)
 		if ok {
-			c.Error(FromAppError(appError))
+			c.Error(httperrors.FromAppError(appError))
 		} else {
-			c.Error(InternalServerError(err))
+			c.Error(httperrors.InternalServerError(err))
 		}
 		return
 	}
@@ -43,19 +44,19 @@ func (handler *routeHandler) AddTask(c *gin.Context) {
 	var payload CreateTask
 
 	if err := c.BindJSON(&payload); err != nil {
-		c.Error(InternalServerError(fmt.Errorf("c.BindJSON failed with error %v", err)))
+		c.Error(httperrors.InternalServerError(fmt.Errorf("c.BindJSON failed with error %v", err)))
 		return
 	}
 
 	if payload.Title == nil {
-		c.Error(MissingBodyError(ErrorField{
+		c.Error(httperrors.MissingBodyError(httperrors.ErrorField{
 			Field:  "title",
 			Reason: "Task 'title' is required",
 		}))
 		return
 	}
 	if payload.Description == nil {
-		c.Error(MissingBodyError(ErrorField{
+		c.Error(httperrors.MissingBodyError(httperrors.ErrorField{
 			Field:  "description",
 			Reason: "Task 'description' is required",
 		}))
@@ -66,9 +67,9 @@ func (handler *routeHandler) AddTask(c *gin.Context) {
 	if err != nil {
 		appError, ok := err.(*errors.AppError)
 		if ok {
-			c.Error(FromAppError(appError))
+			c.Error(httperrors.FromAppError(appError))
 		} else {
-			c.Error(InternalServerError(err))
+			c.Error(httperrors.InternalServerError(err))
 		}
 		return
 	}
@@ -79,7 +80,7 @@ func (handler *routeHandler) AddTask(c *gin.Context) {
 func (handler *routeHandler) GetTask(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.Error(InvalidRequestParamError(ErrorField{
+		c.Error(httperrors.InvalidRequestParamError(httperrors.ErrorField{
 			Field:  "id",
 			Reason: "'id' should be a valid integer",
 		}))
@@ -90,9 +91,9 @@ func (handler *routeHandler) GetTask(c *gin.Context) {
 	if err != nil {
 		appError, ok := err.(*errors.AppError)
 		if ok {
-			c.Error(FromAppError(appError))
+			c.Error(httperrors.FromAppError(appError))
 		} else {
-			c.Error(InternalServerError(err))
+			c.Error(httperrors.InternalServerError(err))
 		}
 		return
 	}
@@ -103,7 +104,7 @@ func (handler *routeHandler) GetTask(c *gin.Context) {
 func (handler *routeHandler) UpdateTask(c *gin.Context) {
 	var id, err = strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.Error(InvalidRequestParamError(ErrorField{
+		c.Error(httperrors.InvalidRequestParamError(httperrors.ErrorField{
 			Field:  "id",
 			Reason: "'id' should be a valid integer",
 		}))
@@ -111,12 +112,12 @@ func (handler *routeHandler) UpdateTask(c *gin.Context) {
 	}
 	var payload services.UpdateTaskData
 	if err := c.BindJSON(&payload); err != nil {
-		c.Error(InternalServerError(fmt.Errorf("c.BindJSON failed with error %v", err)))
+		c.Error(httperrors.InternalServerError(fmt.Errorf("c.BindJSON failed with error %v", err)))
 		return
 	}
 
 	if payload.Title == nil && payload.Description == nil && payload.IsCompleted == nil {
-		c.Error(NoOpError())
+		c.Error(httperrors.NoOpError())
 		return
 	}
 
@@ -124,9 +125,9 @@ func (handler *routeHandler) UpdateTask(c *gin.Context) {
 	if err != nil {
 		appError, ok := err.(*errors.AppError)
 		if ok {
-			c.Error(FromAppError(appError))
+			c.Error(httperrors.FromAppError(appError))
 		} else {
-			c.Error(InternalServerError(err))
+			c.Error(httperrors.InternalServerError(err))
 		}
 		return
 	}
@@ -137,7 +138,7 @@ func (handler *routeHandler) UpdateTask(c *gin.Context) {
 func (handler *routeHandler) DeleteTask(c *gin.Context) {
 	var id, err = strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.Error(InvalidRequestParamError(ErrorField{
+		c.Error(httperrors.InvalidRequestParamError(httperrors.ErrorField{
 			Field:  "id",
 			Reason: "'id' should be a valid integer",
 		}))
@@ -148,9 +149,9 @@ func (handler *routeHandler) DeleteTask(c *gin.Context) {
 	if err != nil {
 		appError, ok := err.(*errors.AppError)
 		if ok {
-			c.Error(FromAppError(appError))
+			c.Error(httperrors.FromAppError(appError))
 		} else {
-			c.Error(InternalServerError(err))
+			c.Error(httperrors.InternalServerError(err))
 		}
 		return
 	}
@@ -161,7 +162,7 @@ func (handler *routeHandler) DeleteTask(c *gin.Context) {
 func (handler *routeHandler) SearchTasks(c *gin.Context) {
 	var query string = c.Query("q")
 	if query == "" {
-		c.Error(InvalidRequestParamError(ErrorField{
+		c.Error(httperrors.InvalidRequestParamError(httperrors.ErrorField{
 			Field:  "q",
 			Reason: "query param 'q' is required",
 		}))
@@ -172,9 +173,9 @@ func (handler *routeHandler) SearchTasks(c *gin.Context) {
 	if err != nil {
 		appError, ok := err.(*errors.AppError)
 		if ok {
-			c.Error(FromAppError(appError))
+			c.Error(httperrors.FromAppError(appError))
 		} else {
-			c.Error(InternalServerError(err))
+			c.Error(httperrors.InternalServerError(err))
 		}
 		return
 	}

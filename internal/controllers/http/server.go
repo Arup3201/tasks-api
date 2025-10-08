@@ -18,9 +18,11 @@ type HttpServer struct {
 var Server = &HttpServer{}
 
 func InitServer(storage storages.TaskRepository) error {
-	engine := gin.Default()
+	engine := gin.New()
+	engine.Use(gin.Logger())
+	engine.Use(gin.Recovery())
 	engine.Use(middlewares.HttpErrorResponse())
-	engine.Use(middlewares.Authenticate([]string{"/tasks", "/search"})())
+	engine.Use(middlewares.Authenticate([]string{"/tasks", "/search"}))
 
 	serviceHandler, err := task.NewTaskService(storage)
 	if err != nil {

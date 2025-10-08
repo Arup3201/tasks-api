@@ -1,4 +1,4 @@
-package httpController
+package httperrors
 
 import (
 	"encoding/json"
@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	UNAUTHORIZED = "NOT_AUTHORIZED"
 	NOOP         = "NO_MODIFICATION"
 	MISSINGBODY  = "MISSING_BODY_PROPERTY"
 	INVALIDBODY  = "INVALID_BODY_PROPERTY"
@@ -94,6 +95,18 @@ func FromAppError(appError *errors.AppError) *HttpError {
 	}
 
 	return InternalServerError(appError.Cause)
+}
+
+func UnauthorizedError() *HttpError {
+	return New(
+		UNAUTHORIZED,
+		"https://problems-registry.smartbear.com/unauthorized",
+		"Unauthorized",
+		"Access token not set or invalid, and the requested resource could not be returned",
+		http.StatusUnauthorized,
+		"401-01",
+		nil,
+	)
 }
 
 func InvalidBodyError(fields ...ErrorField) *HttpError {
