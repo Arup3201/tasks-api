@@ -5,14 +5,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Arup3201/gotasks/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
 )
 
 type middlewareCallback func() gin.HandlerFunc
-
-const jwksURL = `http://127.0.0.1:8081/realms/keycloak-demo/protocol/openid-connect/certs`
 
 func Authenticate(secureEndpoints []string) middlewareCallback {
 	return func() gin.HandlerFunc {
@@ -42,7 +41,7 @@ func verifyToken(request *http.Request) (jwt.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	jwksKeySet, err := jwk.Fetch(request.Context(), jwksURL)
+	jwksKeySet, err := jwk.Fetch(request.Context(), utils.Config.KEYCLOAK_JWT_URL)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +54,7 @@ func verifyToken(request *http.Request) (jwt.Token, error) {
 
 func getAuthHeader(request *http.Request) (string, error) {
 	header := strings.Fields(request.Header.Get("Authorization"))
-	if header[0] != "Bearer" {
+	if len(header) == 0 || header[0] != "Bearer" {
 		return "", errors.New("malformed token")
 	}
 	return header[1], nil

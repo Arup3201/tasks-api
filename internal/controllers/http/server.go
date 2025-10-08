@@ -20,6 +20,7 @@ var Server = &HttpServer{}
 func InitServer(storage storages.TaskRepository) error {
 	engine := gin.Default()
 	engine.Use(middlewares.HttpErrorResponse())
+	engine.Use(middlewares.Authenticate([]string{"/tasks", "/search"})())
 
 	serviceHandler, err := task.NewTaskService(storage)
 	if err != nil {
