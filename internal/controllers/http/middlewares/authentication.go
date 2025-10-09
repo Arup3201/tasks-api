@@ -21,6 +21,7 @@ func Authenticate(secureEndpoints []string) gin.HandlerFunc {
 				if err != nil {
 					log.Printf("authentication error: %v", err)
 					c.Error(httperrors.UnauthorizedError())
+					c.Abort()
 					return
 				}
 				if token != nil {
@@ -28,6 +29,7 @@ func Authenticate(secureEndpoints []string) gin.HandlerFunc {
 				} else {
 					log.Printf("authentication error: invalid token")
 					c.Error(httperrors.UnauthorizedError())
+					c.Abort()
 				}
 				return
 			}
