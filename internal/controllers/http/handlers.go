@@ -1,13 +1,17 @@
 package httpController
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
 	httperrors "github.com/Arup3201/gotasks/internal/controllers/http/errors"
 	"github.com/Arup3201/gotasks/internal/errors"
 	"github.com/Arup3201/gotasks/internal/services"
+	"github.com/Arup3201/gotasks/internal/utils"
+	"github.com/Nerzal/gocloak/v13"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,6 +28,33 @@ func GetRouteHandler(handler services.ServiceHandler) *routeHandler {
 	return &routeHandler{
 		serviceHandler: handler,
 	}
+}
+
+func (handler *routeHandler) Login(c *gin.Context) {
+	var credential struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	if err := c.BindJSON(&credential); err != nil {
+		c.Error(httperrors.InternalServerError(fmt.Errorf("c.BindJSON failed with error %v", err)))
+		return
+	}
+
+	client := gocloak.NewClient(utils.Config.KeycloakServerUrl)
+	ctx := context.Background()
+	token, err := client.Login(ctx, utils.Config.KeycloakClientId, utils.Config.KeycloakClientSecret, utils.Config.KeycloakRealName,
+		credential.Username, credential.Password)
+	if err != nil {
+		log.Printf("login error: %v", err)
+		c.Error(httperrors.IncorrectCredentialError())
+		return
+	}
+
+	c.Header("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login success",
+	})
 }
 
 func (handler *routeHandler) GetTasks(c *gin.Context) {

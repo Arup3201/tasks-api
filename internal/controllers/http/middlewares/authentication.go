@@ -44,7 +44,7 @@ func verifyToken(request *http.Request) (jwt.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	jwksKeySet, err := jwk.Fetch(request.Context(), utils.Config.KEYCLOAK_JWT_URL)
+	jwksKeySet, err := jwk.Fetch(request.Context(), utils.Config.KeycloakJwtUrl)
 	if err != nil {
 		return nil, err
 	}

@@ -38,6 +38,7 @@ func InitServer(storage storages.TaskRepository) error {
 }
 
 func (server *HttpServer) AttachRoutes() {
+	server.engine.POST("/login", server.routeHandler.Login)
 	server.engine.GET("/tasks", server.routeHandler.GetTasks)
 	server.engine.POST("/tasks", server.routeHandler.AddTask)
 	server.engine.GET("/tasks/:id", server.routeHandler.GetTask)
