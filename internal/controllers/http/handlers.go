@@ -1,17 +1,18 @@
 package httpController
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 
 	httperrors "github.com/Arup3201/gotasks/internal/controllers/http/errors"
 	"github.com/Arup3201/gotasks/internal/errors"
 	"github.com/Arup3201/gotasks/internal/services"
 	"github.com/Arup3201/gotasks/internal/utils"
-	"github.com/Nerzal/gocloak/v13"
 	"github.com/gin-gonic/gin"
 )
 
@@ -41,12 +42,37 @@ func (handler *routeHandler) Login(c *gin.Context) {
 		return
 	}
 
-	client := gocloak.NewClient(utils.Config.KeycloakServerUrl)
-	ctx := context.Background()
-	token, err := client.Login(ctx, utils.Config.KeycloakClientId, utils.Config.KeycloakClientSecret, utils.Config.KeycloakRealName,
-		credential.Username, credential.Password)
+	formValues := url.Values{}
+	formValues.Set("grant_type", "password")
+	formValues.Set("client_id", utils.Config.KeycloakClientId)
+	formValues.Set("client_secret", utils.Config.KeycloakClientSecret)
+	formValues.Set("username", credential.Username)
+	formValues.Set("password", credential.Password)
+
+	request, err := http.NewRequest("POST", fmt.Sprintf("%s/realms/%s/protocol/openid-connect/token", utils.Config.KeycloakServerUrl, utils.Config.KeycloakRealName), strings.NewReader(formValues.Encode()))
 	if err != nil {
-		log.Printf("login error: %v", err)
+		log.Fatalf("http new request error: %v", err)
+	}
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Fatalf("http client do error: %v", err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		log.Printf("login error: keycloak token response error: got response with status %d", response.StatusCode)
+		c.Error(httperrors.IncorrectCredentialError())
+		return
+	}
+
+	var token struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err = json.NewDecoder(response.Body).Decode(&token); err != nil {
+		log.Printf("login error: keycloak token response encoding error: %v", err)
 		c.Error(httperrors.IncorrectCredentialError())
 		return
 	}

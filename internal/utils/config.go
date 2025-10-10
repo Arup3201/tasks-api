@@ -16,7 +16,6 @@ const (
 	KEYCLOAK_REALM_NAME    = "KEYCLOAK_REALM"
 	KEYCLOAK_CLIENT_ID     = "KEYCLOAK_CLIENT_ID"
 	KEYCLOAK_CLIENT_SECRET = "KEYCLOAK_CLIENT_SECRET"
-	KEYCLOAK_JWT_URL       = "KEYCLOAK_JWT_URL"
 )
 
 const defaultPort = "8086"
@@ -103,12 +102,5 @@ func (eList *envList) Configure() {
 		log.Fatalf("%s variable missing in environment variables", KEYCLOAK_CLIENT_SECRET)
 	} else {
 		eList.KeycloakClientSecret = KeycloakClientSecret
-	}
-
-	keycloakJwtUrl, ok := os.LookupEnv(KEYCLOAK_JWT_URL)
-	if !ok {
-		log.Fatalf("%s variable missing in environment variables", KEYCLOAK_JWT_URL)
-	} else {
-		eList.KeycloakJwtUrl = keycloakJwtUrl
 	}
 }
