@@ -18,7 +18,7 @@ jobs:
       postgres:
         image: postgres:18-alpine
         env:
-          POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+          POSTGRES_PASSWORD: ${{ vars.POSTGRES_PASSWORD }}
           POSTGRES_DB: tests
         options: >-
           --health-cmd pg_isready
@@ -45,7 +45,11 @@ jobs:
       
       env:
           DBHOST: localhost
-          DBUSER: $POSTGRES_USER
+          DBUSER: ${{ vars.POSTGRES_USER }}
           DBPORT: 5432
-          DBPASS: $POSTGRES_PASSWORD
+          DBPASS: ${{ vars.POSTGRES_PASSWORD }}
           DBNAME: tests
+          KEYCLOAK_SERVER_URL: ${{ vars.KEYCLOAK_SERVER_URL }}
+          KEYCLOAK_REALM: ${{ vars.KEYCLOAK_REALM }}
+          KEYCLOAK_CLIENT_ID: ${{ vars.KEYCLOAK_CLIENT_ID }}
+          KEYCLOAK_CLIENT_SECRET: ${{ vars.KEYCLOAK_CLIENT_SECRET }}
