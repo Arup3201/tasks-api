@@ -32,7 +32,6 @@ type envList struct {
 	KeycloakRealName     string
 	KeycloakClientId     string
 	KeycloakClientSecret string
-	KeycloakJwtUrl       string
 }
 
 var Config = &envList{}

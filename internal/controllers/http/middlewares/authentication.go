@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -20,16 +21,14 @@ func Authenticate(secureEndpoints []string) gin.HandlerFunc {
 				token, err := verifyToken(c.Request)
 				if err != nil {
 					log.Printf("authentication error: %v", err)
-					c.Error(httperrors.UnauthorizedError())
-					c.Abort()
+					abortAuthentication(c)
 					return
 				}
 				if token != nil {
 					c.Next()
 				} else {
 					log.Printf("authentication error: invalid token")
-					c.Error(httperrors.UnauthorizedError())
-					c.Abort()
+					abortAuthentication(c)
 				}
 				return
 			}
@@ -39,12 +38,18 @@ func Authenticate(secureEndpoints []string) gin.HandlerFunc {
 	}
 }
 
+func abortAuthentication(c *gin.Context) {
+	c.Header("WWW-Authenticate", "Bearer token68")
+	c.Error(httperrors.UnauthorizedError())
+	c.Abort()
+}
+
 func verifyToken(request *http.Request) (jwt.Token, error) {
 	strToken, err := getAuthHeader(request)
 	if err != nil {
 		return nil, err
 	}
-	jwksKeySet, err := jwk.Fetch(request.Context(), utils.Config.KeycloakJwtUrl)
+	jwksKeySet, err := jwk.Fetch(request.Context(), fmt.Sprintf("%s/realms/%s/protocol/openid-connect/certs", utils.Config.KeycloakServerUrl, utils.Config.KeycloakRealName))
 	if err != nil {
 		return nil, err
 	}
