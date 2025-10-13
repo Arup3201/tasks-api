@@ -12,9 +12,6 @@ name: Publish Docker image
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
 
 jobs:
   publish-image-job:
