@@ -44,7 +44,7 @@ jobs:
       run: go test -v ./...
       
       env:
-          DBHOST: postgres
+          DBHOST: localhost
           DBUSER: ${{ vars.POSTGRES_USER }}
           DBPORT: 5432
           DBPASS: ${{ vars.POSTGRES_PASSWORD }}
