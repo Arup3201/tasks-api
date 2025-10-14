@@ -1,4 +1,4 @@
-package httpController
+package httperrors
 
 import (
 	"encoding/json"
@@ -9,12 +9,14 @@ import (
 )
 
 const (
-	NOOP         = "NO_MODIFICATION"
-	MISSINGBODY  = "MISSING_BODY_PROPERTY"
-	INVALIDBODY  = "INVALID_BODY_PROPERTY"
-	INVALIDPARAM = "INVALID_PARAMETER_VALUE"
-	NOTFOUND     = "NOT_FOUND"
-	SERVERERROR  = "SERVER_ERROR"
+	INCORRECT_CREDENTIAL = "INCORRECT_CREDENTIALS"
+	UNAUTHORIZED         = "NOT_AUTHORIZED"
+	NO_OP                = "NO_MODIFICATION"
+	MISSING_BODY         = "MISSING_BODY_PROPERTY"
+	INVALID_BODY         = "INVALID_BODY_PROPERTY"
+	INVALID_PARAM        = "INVALID_PARAMETER_VALUE"
+	NOT_FOUND            = "NOT_FOUND"
+	SERVER_ERROR         = "SERVER_ERROR"
 )
 
 type BaseError struct {
@@ -96,9 +98,33 @@ func FromAppError(appError *errors.AppError) *HttpError {
 	return InternalServerError(appError.Cause)
 }
 
+func IncorrectCredentialError() *HttpError {
+	return New(
+		INCORRECT_CREDENTIAL,
+		"about:blank",
+		"Incorrect credentials for login",
+		"Username or password is not valid, please try with correct username and password",
+		http.StatusBadRequest,
+		"400-07",
+		nil,
+	)
+}
+
+func UnauthorizedError() *HttpError {
+	return New(
+		UNAUTHORIZED,
+		"https://problems-registry.smartbear.com/unauthorized",
+		"Unauthorized",
+		"Access token not set or invalid, and the requested resource could not be returned",
+		http.StatusUnauthorized,
+		"401-01",
+		nil,
+	)
+}
+
 func InvalidBodyError(fields ...ErrorField) *HttpError {
 	return New(
-		INVALIDBODY,
+		INVALID_BODY,
 		"https://problems-registry.smartbear.com/invalid-body-property-value",
 		"Invalid body property value",
 		"The request body contains an invalid body property value.",
@@ -111,7 +137,7 @@ func InvalidBodyError(fields ...ErrorField) *HttpError {
 
 func MissingBodyError(fields ...ErrorField) *HttpError {
 	return New(
-		MISSINGBODY,
+		MISSING_BODY,
 		"https://problems-registry.smartbear.com/missing-body-property",
 		"Missing body property",
 		"The request is missing an expected body property.",
@@ -124,7 +150,7 @@ func MissingBodyError(fields ...ErrorField) *HttpError {
 
 func InvalidRequestParamError(fields ...ErrorField) *HttpError {
 	return New(
-		INVALIDPARAM,
+		INVALID_PARAM,
 		"https://problems-registry.smartbear.com/invalid-request-parameter-value",
 		"Invalid request parameter value",
 		"The request body contains an invalid request parameter value.",
@@ -137,7 +163,7 @@ func InvalidRequestParamError(fields ...ErrorField) *HttpError {
 
 func NotFoundError() *HttpError {
 	return New(
-		NOTFOUND,
+		NOT_FOUND,
 		"https://problems-registry.smartbear.com/not-found",
 		"Not found",
 		"The requested resource was not found",
@@ -149,7 +175,7 @@ func NotFoundError() *HttpError {
 
 func NoOpError() *HttpError {
 	return New(
-		NOOP,
+		NO_OP,
 		"about:blank",
 		"Not modified",
 		"No modification happened at server",
@@ -161,7 +187,7 @@ func NoOpError() *HttpError {
 
 func InternalServerError(cause error) *HttpError {
 	return New(
-		SERVERERROR,
+		SERVER_ERROR,
 		"https://problems-registry.smartbear.com/server-error",
 		"Internal server error",
 		"The server encountered an unexpected error",
