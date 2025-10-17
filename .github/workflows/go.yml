@@ -41,21 +41,14 @@ jobs:
     - name: Build
       run: go build -v ./...
 
-    - name: Debug environment variables
-      run: |
-        echo "DBHOST: $DBHOST"
-        echo "DBUSER: $DBUSER"
-        echo "DBNAME: $DBNAME"
-      env:
-        DBHOST: localhost
-        DBUSER: ${{ vars.POSTGRES_USERNAME }}
-        DBNAME: tests
-
     - name: Verify PostgreSQL connection
+      env:
+        PGPASSWORD: ${{ vars.POSTGRES_PASSWORD }}
       run: |
         sudo apt-get update
         sudo apt-get install -y postgresql-client
-        PGPASSWORD=${{ vars.POSTGRES_PASSWORD }} psql -h localhost -U ${{ vars.POSTGRES_USERNAME }} -d tests -c "SELECT version();"
+        psql -h localhost -U ${{ vars.POSTGRES_USERNAME }} -d tests -c "SELECT version();"
+
 
     - name: Test
       env:
