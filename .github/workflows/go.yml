@@ -41,15 +41,6 @@ jobs:
     - name: Build
       run: go build -v ./...
 
-    - name: Verify PostgreSQL connection
-      env:
-        PGPASSWORD: ${{ vars.POSTGRES_PASSWORD }}
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y postgresql-client
-        psql -h localhost -U ${{ vars.POSTGRES_USERNAME }} -d tests -c "SELECT version();"
-
-
     - name: Test
       env:
         DBHOST: localhost
