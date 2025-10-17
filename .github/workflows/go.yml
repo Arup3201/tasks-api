@@ -55,7 +55,7 @@ jobs:
         DBHOST: localhost
         DBUSER: ${{ vars.POSTGRES_USERNAME }}
         DBPASS: ${{ vars.POSTGRES_PASSWORD }}
-        DBPORT: 5432
+        DBPORT: "5432"
         DBNAME: tests
         KEYCLOAK_SERVER_URL: ${{ vars.KEYCLOAK_SERVER_URL }}
         KEYCLOAK_REALM: ${{ vars.KEYCLOAK_REALM }}
