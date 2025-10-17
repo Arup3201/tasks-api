@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"testing"
 
@@ -13,6 +14,7 @@ import (
 	httperrors "github.com/Arup3201/gotasks/internal/controllers/http/errors"
 	entities "github.com/Arup3201/gotasks/internal/entities/task"
 	"github.com/Arup3201/gotasks/internal/services"
+	"github.com/Arup3201/gotasks/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,6 +26,19 @@ func assertTask(t testing.TB, want, got entities.Task) {
 	assert.Equal(t, want.Description, got.Description)
 	assert.Equal(t, want.IsCompleted, got.IsCompleted)
 	assert.Equal(t, want.CreatedAt, got.CreatedAt)
+}
+
+func TestEnvVars(t *testing.T) {
+	t.Logf("DBHOST env: %s", os.Getenv("DBHOST"))
+	t.Logf("DBUSER env: %s", os.Getenv("DBUSER"))
+
+	t.Logf("Config.DBHost: %s", utils.Config.DBHost)
+	t.Logf("Config.DBUser: %s", utils.Config.DBUser)
+
+	expectedHost := "localhost"
+	if utils.Config.DBHost != expectedHost {
+		t.Errorf("Expected DBHost to be 'localhost', got '%s'", utils.Config.DBHost)
+	}
 }
 
 // Check that we have 10 tasks initially
