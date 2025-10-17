@@ -19,6 +19,7 @@ jobs:
         image: postgres:18-alpine
         env:
           POSTGRES_PASSWORD: ${{ vars.POSTGRES_PASSWORD }}
+          POSTGRES_USER: ${{ vars.POSTGRES_USERNAME }}
           POSTGRES_DB: tests
         options: >-
           --health-cmd pg_isready
@@ -45,7 +46,7 @@ jobs:
       
       env:
           DBHOST: localhost
-          DBUSER: ${{ vars.POSTGRES_USER }}
+          DBUSER: ${{ vars.POSTGRES_USERNAME }}
           DBPORT: 5432
           DBPASS: ${{ vars.POSTGRES_PASSWORD }}
           DBNAME: tests
