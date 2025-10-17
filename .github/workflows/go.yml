@@ -34,7 +34,7 @@ jobs:
       uses: actions/checkout@v4
     
     - name: Setup Go 1.25.x
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
         go-version: '1.25.x'
 
@@ -42,15 +42,14 @@ jobs:
       run: go build -v ./...
 
     - name: Test
-      run: go test -v ./...
-      
       env:
-          DBHOST: localhost
-          DBUSER: ${{ vars.POSTGRES_USERNAME }}
-          DBPORT: 5432
-          DBPASS: ${{ vars.POSTGRES_PASSWORD }}
-          DBNAME: tests
-          KEYCLOAK_SERVER_URL: ${{ vars.KEYCLOAK_SERVER_URL }}
-          KEYCLOAK_REALM: ${{ vars.KEYCLOAK_REALM }}
-          KEYCLOAK_CLIENT_ID: ${{ vars.KEYCLOAK_CLIENT_ID }}
-          KEYCLOAK_CLIENT_SECRET: ${{ vars.KEYCLOAK_CLIENT_SECRET }}
+        DBHOST: localhost
+        DBUSER: ${{ vars.POSTGRES_USERNAME }}
+        DBPASS: ${{ vars.POSTGRES_PASSWORD }}
+        DBPORT: 5432
+        DBNAME: tests
+        KEYCLOAK_SERVER_URL: ${{ vars.KEYCLOAK_SERVER_URL }}
+        KEYCLOAK_REALM: ${{ vars.KEYCLOAK_REALM }}
+        KEYCLOAK_CLIENT_ID: ${{ vars.KEYCLOAK_CLIENT_ID }}
+        KEYCLOAK_CLIENT_SECRET: ${{ vars.KEYCLOAK_CLIENT_SECRET }}
+      run: go test -v ./...
