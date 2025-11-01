@@ -6,14 +6,12 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"strconv"
 	"testing"
 
 	httpController "github.com/Arup3201/gotasks/internal/controllers/http"
 	entities "github.com/Arup3201/gotasks/internal/entities/task"
 	"github.com/Arup3201/gotasks/internal/services"
-	"github.com/Arup3201/gotasks/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,19 +23,6 @@ func assertTask(t testing.TB, want, got entities.Task) {
 	assert.Equal(t, want.Description, got.Description)
 	assert.Equal(t, want.IsCompleted, got.IsCompleted)
 	assert.Equal(t, want.CreatedAt, got.CreatedAt)
-}
-
-func TestEnvVars(t *testing.T) {
-	t.Logf("DBHOST env: %s", os.Getenv("DBHOST"))
-	t.Logf("DBUSER env: %s", os.Getenv("DBUSER"))
-
-	t.Logf("Config.DBHost: %s", utils.Config.DBHost)
-	t.Logf("Config.DBUser: %s", utils.Config.DBUser)
-
-	expectedHost := "localhost"
-	if utils.Config.DBHost != expectedHost {
-		t.Errorf("Expected DBHost to be 'localhost', got '%s'", utils.Config.DBHost)
-	}
 }
 
 // Check that we have 10 tasks initially
@@ -69,7 +54,6 @@ func TestAddTaskCheckSuccess(t *testing.T) {
 		Description: fmt.Sprintf("description - %d", rand.Intn(9999)),
 	}
 	expectedTasksNum := 3
-	expectedTaskId := 3
 
 	// act
 	response1 := makeRequest("POST", "/tasks", task)
@@ -83,7 +67,8 @@ func TestAddTaskCheckSuccess(t *testing.T) {
 		log.Fatalf("JSON decoder error: %v", err)
 	}
 
-	assert.Equal(t, expectedTaskId, responseTask.Id)
+	assert.Equal(t, task.Title, responseTask.Title)
+	assert.Equal(t, task.Description, responseTask.Description)
 
 	assert.Equal(t, http.StatusOK, response2.Code)
 
@@ -104,11 +89,6 @@ func TestAddAndViewTaskSuccess(t *testing.T) {
 		Title:       fmt.Sprintf("title - %d", rand.Intn(9999)),
 		Description: fmt.Sprintf("description - %d", rand.Intn(9999)),
 	}
-	expected := entities.Task{
-		Id:          3,
-		Title:       task.Title,
-		Description: task.Description,
-	}
 
 	// act
 	response1 := makeRequest("POST", "/tasks", task)
@@ -121,9 +101,8 @@ func TestAddAndViewTaskSuccess(t *testing.T) {
 	if err := json.NewDecoder(response1.Body).Decode(&responseTask); err != nil {
 		log.Fatalf("JSON decoder error: %v", err)
 	}
-	assert.Equal(t, expected.Id, responseTask.Id)
-	assert.Equal(t, expected.Title, responseTask.Title)
-	assert.Equal(t, expected.Description, responseTask.Description)
+	assert.Equal(t, task.Title, responseTask.Title)
+	assert.Equal(t, task.Description, responseTask.Description)
 
 	assert.Equal(t, http.StatusOK, response2.Code)
 	if err := json.NewDecoder(response2.Body).Decode(&responseTask); err != nil {
@@ -149,7 +128,7 @@ func TestViewInvalidTaskFail(t *testing.T) {
 	}
 
 	// act
-	response := makeRequest("GET", "/tasks/3", nil)
+	response := makeRequest("GET", "/tasks/abcd010", nil)
 
 	// assert
 	assert.Equal(t, expectedErrorCode, response.Code)

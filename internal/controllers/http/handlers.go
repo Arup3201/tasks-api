@@ -3,7 +3,6 @@ package httpController
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/Arup3201/gotasks/internal/errors"
 	"github.com/Arup3201/gotasks/internal/services"
@@ -77,14 +76,7 @@ func (handler *routeHandler) AddTask(c *gin.Context) {
 }
 
 func (handler *routeHandler) GetTask(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.Error(InvalidRequestParamError(ErrorField{
-			Field:  "id",
-			Reason: "'id' should be a valid integer",
-		}))
-		return
-	}
+	id := c.Param("id")
 
 	task, err := handler.serviceHandler.GetTask(id)
 	if err != nil {
@@ -101,14 +93,8 @@ func (handler *routeHandler) GetTask(c *gin.Context) {
 }
 
 func (handler *routeHandler) UpdateTask(c *gin.Context) {
-	var id, err = strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.Error(InvalidRequestParamError(ErrorField{
-			Field:  "id",
-			Reason: "'id' should be a valid integer",
-		}))
-		return
-	}
+	id := c.Param("id")
+
 	var payload services.UpdateTaskData
 	if err := c.BindJSON(&payload); err != nil {
 		c.Error(InternalServerError(fmt.Errorf("c.BindJSON failed with error %v", err)))
@@ -135,14 +121,7 @@ func (handler *routeHandler) UpdateTask(c *gin.Context) {
 }
 
 func (handler *routeHandler) DeleteTask(c *gin.Context) {
-	var id, err = strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.Error(InvalidRequestParamError(ErrorField{
-			Field:  "id",
-			Reason: "'id' should be a valid integer",
-		}))
-		return
-	}
+	id := c.Param("id")
 
 	taskId, err := handler.serviceHandler.DeleteTask(id)
 	if err != nil {

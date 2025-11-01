@@ -20,18 +20,18 @@ func NewPgTaskRepository(db *sql.DB) *PgTaskRepository {
 	}
 }
 
-func (pg *PgTaskRepository) Get(taskId int) (*task.Task, error) {
+func (pg *PgTaskRepository) Get(taskId string) (*task.Task, error) {
 	var task task.Task
 	if err := pg.db.QueryRow("SELECT * FROM tasks WHERE id = ($1)", taskId).Scan(&task.Id, &task.Title, &task.Description, &task.IsCompleted, &task.CreatedAt, &task.UpdatedAt); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
+			return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %s not found", taskId))
 		}
 		return nil, err
 	}
 	return &task, nil
 }
 
-func (pg *PgTaskRepository) Insert(taskId int, taskTitle, taskDesc string) (*task.Task, error) {
+func (pg *PgTaskRepository) Insert(taskId string, taskTitle, taskDesc string) (*task.Task, error) {
 	task := task.Task{
 		Id:          taskId,
 		Title:       taskTitle,
@@ -47,7 +47,7 @@ func (pg *PgTaskRepository) Insert(taskId int, taskTitle, taskDesc string) (*tas
 	return &task, nil
 }
 
-func (pg *PgTaskRepository) Update(taskId int, data map[string]any) (*task.Task, error) {
+func (pg *PgTaskRepository) Update(taskId string, data map[string]any) (*task.Task, error) {
 	_, err := pg.Get(taskId)
 	if err != nil {
 		return nil, err
@@ -81,14 +81,14 @@ func (pg *PgTaskRepository) Update(taskId int, data map[string]any) (*task.Task,
 	return pg.Get(taskId)
 }
 
-func (pg *PgTaskRepository) Delete(taskId int) (*int, error) {
+func (pg *PgTaskRepository) Delete(taskId string) (*string, error) {
 	res, err := pg.db.Exec("DELETE FROM tasks WHERE id=($1)", taskId)
 	if err != nil {
 		return nil, err
 	}
 
 	if n, _ := res.RowsAffected(); n == 0 {
-		return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
+		return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %s not found", taskId))
 	}
 
 	return &taskId, nil

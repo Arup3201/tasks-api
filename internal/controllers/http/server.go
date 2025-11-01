@@ -43,10 +43,6 @@ func (server *HttpServer) AttachRoutes() {
 	server.engine.GET("/search/tasks", server.routeHandler.SearchTasks)
 }
 
-func (server *HttpServer) UpdateLastInsertedId(lastInsertedId int) { // useful for testing setup
-	server.routeHandler.serviceHandler.UpdateLastInsertedId(lastInsertedId)
-}
-
 func (server *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	server.engine.ServeHTTP(w, r)
 }

@@ -11,9 +11,8 @@ type UpdateTaskData struct {
 type ServiceHandler interface {
 	GetAllTasks() ([]task.Task, error)
 	CreateTask(title, description string) (*task.Task, error)
-	GetTask(taskId int) (*task.Task, error)
-	UpdateTask(taskId int, data UpdateTaskData) (*task.Task, error)
-	DeleteTask(taskId int) (*int, error)
+	GetTask(taskId string) (*task.Task, error)
+	UpdateTask(taskId string, data UpdateTaskData) (*task.Task, error)
+	DeleteTask(taskId string) (*string, error)
 	SearchTasks(query string) ([]task.Task, error)
-	UpdateLastInsertedId(lastInsertedId int) // setter funtion
 }
