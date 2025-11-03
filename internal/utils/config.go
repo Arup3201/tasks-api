@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 )
 
 const (
@@ -16,6 +17,7 @@ const (
 	KEYCLOAK_REALM_NAME    = "KEYCLOAK_REALM"
 	KEYCLOAK_CLIENT_ID     = "KEYCLOAK_CLIENT_ID"
 	KEYCLOAK_CLIENT_SECRET = "KEYCLOAK_CLIENT_SECRET"
+	TESTING                = "TESTING"
 )
 
 const defaultPort = "8086"
@@ -32,6 +34,7 @@ type envList struct {
 	KeycloakRealName     string
 	KeycloakClientId     string
 	KeycloakClientSecret string
+	Testing              bool
 }
 
 var Config = &envList{}
@@ -101,5 +104,20 @@ func (eList *envList) Configure() {
 		log.Fatalf("%s variable missing in environment variables", KEYCLOAK_CLIENT_SECRET)
 	} else {
 		eList.KeycloakClientSecret = KeycloakClientSecret
+	}
+
+	IsTesting, ok := os.LookupEnv(TESTING)
+	if !ok {
+		eList.Testing = false
+	} else {
+		parsed := strings.ToLower(IsTesting)
+		switch parsed {
+		case "true":
+			eList.Testing = true
+		case "false":
+			eList.Testing = false
+		default:
+			log.Fatalf("%s variable should be true/false", TESTING)
+		}
 	}
 }
