@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	httpController "github.com/Arup3201/gotasks/internal/controllers/http"
+	httperrors "github.com/Arup3201/gotasks/internal/controllers/http/errors"
 	entities "github.com/Arup3201/gotasks/internal/entities/task"
 	"github.com/Arup3201/gotasks/internal/services"
 	"github.com/stretchr/testify/assert"
@@ -135,7 +136,7 @@ func TestViewInvalidTaskFail(t *testing.T) {
 	// assert
 	assert.Equal(t, expectedErrorCode, response.Code)
 
-	var responseError httpController.HttpError
+	var responseError httperrors.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
 		t.Fail()
 		t.Logf("JSON decoder error: %v", err)
@@ -169,7 +170,7 @@ func TestAddTaskWithMissingTitleFail(t *testing.T) {
 	// assert
 	assert.Equal(t, expectedErrorCode, response.Code)
 
-	var responseError httpController.HttpError
+	var responseError httperrors.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
 		t.Fail()
 		t.Logf("JSON decoder error: %v", err)
@@ -204,7 +205,7 @@ func TestAddTaskWithMissingDescriptionFail(t *testing.T) {
 	// assert
 	assert.Equal(t, expectedErrorCode, response.Code)
 
-	var responseError httpController.HttpError
+	var responseError httperrors.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
 		t.Fail()
 		t.Logf("JSON decoder error: %v", err)
@@ -241,7 +242,7 @@ func TestAddTaskEmptyTitleFail(t *testing.T) {
 	// assert
 	assert.Equal(t, expectedErrorCode, response.Code)
 
-	var responseError httpController.HttpError
+	var responseError httperrors.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
 		t.Fail()
 		t.Logf("JSON decoder error: %v", err)
@@ -278,7 +279,7 @@ func TestAddTaskEmptyDescriptionFail(t *testing.T) {
 	// assert
 	assert.Equal(t, expectedErrorCode, response.Code)
 
-	var responseError httpController.HttpError
+	var responseError httperrors.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
 		t.Fail()
 		t.Logf("JSON decoder error: %v", err)
@@ -447,7 +448,7 @@ func TestUpdateNoOpResponse(t *testing.T) {
 	// assert
 	assert.Equal(t, expectedCode, response.Code)
 
-	var responseBody httpController.HttpError
+	var responseBody httperrors.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseBody); err != nil {
 		t.Fail()
 		t.Logf("JSON decode error: %v", err)
@@ -480,7 +481,7 @@ func TestUpdateInvalidTaskFail(t *testing.T) {
 	// assert
 	assert.Equal(t, expectedCode, response.Code)
 
-	var responseError httpController.HttpError
+	var responseError httperrors.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
 		t.Fail()
 		t.Logf("JSON decode error: %v", err)
@@ -514,7 +515,7 @@ func TestUpdateInvalidTaskTitleFail(t *testing.T) {
 	// assert
 	assert.Equal(t, expectedCode, response.Code)
 
-	var responseError httpController.HttpError
+	var responseError httperrors.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
 		t.Fail()
 		t.Logf("JSON decode error: %v", err)
@@ -549,7 +550,7 @@ func TestUpdateInvalidTaskDescriptionFail(t *testing.T) {
 	// assert
 	assert.Equal(t, expectedCode, response.Code)
 
-	var responseError httpController.HttpError
+	var responseError httperrors.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
 		t.Fail()
 		t.Logf("JSON decode error: %v", err)
@@ -767,7 +768,7 @@ func TestDeleteInvalidTaskFail(t *testing.T) {
 	// assert
 	assert.Equal(t, expectedCode, response.Code)
 
-	var responseError httpController.HttpError
+	var responseError httperrors.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
 		t.Fail()
 		t.Logf("JSON decode error: %v", err)

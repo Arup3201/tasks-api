@@ -1,11 +1,17 @@
 package httpController
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"net/url"
+	"strings"
 
+	httperrors "github.com/Arup3201/gotasks/internal/controllers/http/errors"
 	"github.com/Arup3201/gotasks/internal/errors"
 	"github.com/Arup3201/gotasks/internal/services"
+	"github.com/Arup3201/gotasks/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,14 +30,66 @@ func GetRouteHandler(handler services.ServiceHandler) *routeHandler {
 	}
 }
 
+func (handler *routeHandler) Login(c *gin.Context) {
+	var credential struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	if err := c.BindJSON(&credential); err != nil {
+		c.Error(httperrors.InternalServerError(fmt.Errorf("c.BindJSON failed with error %v", err)))
+		return
+	}
+
+	formValues := url.Values{}
+	formValues.Set("grant_type", "password")
+	formValues.Set("client_id", utils.Config.KeycloakClientId)
+	formValues.Set("client_secret", utils.Config.KeycloakClientSecret)
+	formValues.Set("username", credential.Username)
+	formValues.Set("password", credential.Password)
+
+	request, err := http.NewRequest("POST", fmt.Sprintf("%s/realms/%s/protocol/openid-connect/token", utils.Config.KeycloakServerUrl, utils.Config.KeycloakRealName), strings.NewReader(formValues.Encode()))
+	if err != nil {
+		log.Fatalf("http new request error: %v", err)
+	}
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Fatalf("http client do error: %v", err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		log.Printf("login error: keycloak token response error: got response with status %d", response.StatusCode)
+		c.Error(httperrors.IncorrectCredentialError())
+		return
+	}
+
+	var token struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err = json.NewDecoder(response.Body).Decode(&token); err != nil {
+		log.Printf("login error: keycloak token response encoding error: %v", err)
+		c.Error(httperrors.IncorrectCredentialError())
+		return
+	}
+
+	c.Header("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login success",
+	})
+}
+
 func (handler *routeHandler) GetTasks(c *gin.Context) {
 	tasks, err := handler.serviceHandler.GetAllTasks()
 	if err != nil {
 		appError, ok := err.(*errors.AppError)
 		if ok {
-			c.Error(FromAppError(appError))
+			c.Error(httperrors.FromAppError(appError))
 		} else {
-			c.Error(InternalServerError(err))
+			c.Error(httperrors.InternalServerError(err))
 		}
 		return
 	}
@@ -42,19 +100,19 @@ func (handler *routeHandler) AddTask(c *gin.Context) {
 	var payload CreateTask
 
 	if err := c.BindJSON(&payload); err != nil {
-		c.Error(InternalServerError(fmt.Errorf("c.BindJSON failed with error %v", err)))
+		c.Error(httperrors.InternalServerError(fmt.Errorf("c.BindJSON failed with error %v", err)))
 		return
 	}
 
 	if payload.Title == nil {
-		c.Error(MissingBodyError(ErrorField{
+		c.Error(httperrors.MissingBodyError(httperrors.ErrorField{
 			Field:  "title",
 			Reason: "Task 'title' is required",
 		}))
 		return
 	}
 	if payload.Description == nil {
-		c.Error(MissingBodyError(ErrorField{
+		c.Error(httperrors.MissingBodyError(httperrors.ErrorField{
 			Field:  "description",
 			Reason: "Task 'description' is required",
 		}))
@@ -65,9 +123,9 @@ func (handler *routeHandler) AddTask(c *gin.Context) {
 	if err != nil {
 		appError, ok := err.(*errors.AppError)
 		if ok {
-			c.Error(FromAppError(appError))
+			c.Error(httperrors.FromAppError(appError))
 		} else {
-			c.Error(InternalServerError(err))
+			c.Error(httperrors.InternalServerError(err))
 		}
 		return
 	}
@@ -82,9 +140,9 @@ func (handler *routeHandler) GetTask(c *gin.Context) {
 	if err != nil {
 		appError, ok := err.(*errors.AppError)
 		if ok {
-			c.Error(FromAppError(appError))
+			c.Error(httperrors.FromAppError(appError))
 		} else {
-			c.Error(InternalServerError(err))
+			c.Error(httperrors.InternalServerError(err))
 		}
 		return
 	}
@@ -97,12 +155,12 @@ func (handler *routeHandler) UpdateTask(c *gin.Context) {
 
 	var payload services.UpdateTaskData
 	if err := c.BindJSON(&payload); err != nil {
-		c.Error(InternalServerError(fmt.Errorf("c.BindJSON failed with error %v", err)))
+		c.Error(httperrors.InternalServerError(fmt.Errorf("c.BindJSON failed with error %v", err)))
 		return
 	}
 
 	if payload.Title == nil && payload.Description == nil && payload.IsCompleted == nil {
-		c.Error(NoOpError())
+		c.Error(httperrors.NoOpError())
 		return
 	}
 
@@ -110,9 +168,9 @@ func (handler *routeHandler) UpdateTask(c *gin.Context) {
 	if err != nil {
 		appError, ok := err.(*errors.AppError)
 		if ok {
-			c.Error(FromAppError(appError))
+			c.Error(httperrors.FromAppError(appError))
 		} else {
-			c.Error(InternalServerError(err))
+			c.Error(httperrors.InternalServerError(err))
 		}
 		return
 	}
@@ -127,9 +185,9 @@ func (handler *routeHandler) DeleteTask(c *gin.Context) {
 	if err != nil {
 		appError, ok := err.(*errors.AppError)
 		if ok {
-			c.Error(FromAppError(appError))
+			c.Error(httperrors.FromAppError(appError))
 		} else {
-			c.Error(InternalServerError(err))
+			c.Error(httperrors.InternalServerError(err))
 		}
 		return
 	}
@@ -140,7 +198,7 @@ func (handler *routeHandler) DeleteTask(c *gin.Context) {
 func (handler *routeHandler) SearchTasks(c *gin.Context) {
 	var query string = c.Query("q")
 	if query == "" {
-		c.Error(InvalidRequestParamError(ErrorField{
+		c.Error(httperrors.InvalidRequestParamError(httperrors.ErrorField{
 			Field:  "q",
 			Reason: "query param 'q' is required",
 		}))
@@ -151,9 +209,9 @@ func (handler *routeHandler) SearchTasks(c *gin.Context) {
 	if err != nil {
 		appError, ok := err.(*errors.AppError)
 		if ok {
-			c.Error(FromAppError(appError))
+			c.Error(httperrors.FromAppError(appError))
 		} else {
-			c.Error(InternalServerError(err))
+			c.Error(httperrors.InternalServerError(err))
 		}
 		return
 	}

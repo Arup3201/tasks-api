@@ -18,8 +18,11 @@ type HttpServer struct {
 var Server = &HttpServer{}
 
 func InitServer(storage storages.TaskRepository) error {
-	engine := gin.Default()
+	engine := gin.New()
+	engine.Use(gin.Logger())
+	engine.Use(gin.Recovery())
 	engine.Use(middlewares.HttpErrorResponse())
+	engine.Use(middlewares.Authenticate([]string{"/tasks", "/search"}))
 
 	serviceHandler, err := task.NewTaskService(storage)
 	if err != nil {
@@ -35,6 +38,7 @@ func InitServer(storage storages.TaskRepository) error {
 }
 
 func (server *HttpServer) AttachRoutes() {
+	server.engine.POST("/login", server.routeHandler.Login)
 	server.engine.GET("/tasks", server.routeHandler.GetTasks)
 	server.engine.POST("/tasks", server.routeHandler.AddTask)
 	server.engine.GET("/tasks/:id", server.routeHandler.GetTask)

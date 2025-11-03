@@ -13,7 +13,6 @@ on:
   push:
     branches: [ "main" ]
 
-
 jobs:
   publish-image-job:
     name: Push Docker image to Docker Hub
