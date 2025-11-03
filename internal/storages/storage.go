@@ -25,7 +25,7 @@ func New(dbType string) (TaskRepository, error) {
 		}
 
 		_, err = db.Exec(`CREATE TABLE IF NOT EXISTS tasks(
-								id INT PRIMARY KEY,
+								id VARCHAR(256) PRIMARY KEY,
 								title TEXT NOT NULL, 
 								description TEXT NOT NULL, 
 								is_completed BOOLEAN NOT NULL, 
@@ -45,10 +45,10 @@ func New(dbType string) (TaskRepository, error) {
 }
 
 type TaskRepository interface {
-	Get(taskId int) (*task.Task, error)
-	Insert(taskId int, taskTitle, taskDesc string) (*task.Task, error)
-	Update(taskId int, data map[string]any) (*task.Task, error)
-	Delete(taskId int) (*int, error)
+	Get(taskId string) (*task.Task, error)
+	Insert(taskId string, taskTitle, taskDesc string) (*task.Task, error)
+	Update(taskId string, data map[string]any) (*task.Task, error)
+	Delete(taskId string) (*string, error)
 	List() ([]task.Task, error)
 	Close() error
 }

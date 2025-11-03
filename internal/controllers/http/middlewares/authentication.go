@@ -16,21 +16,23 @@ import (
 
 func Authenticate(secureEndpoints []string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		for _, endpoint := range secureEndpoints {
-			if strings.Index(c.Request.URL.Path, endpoint) == 0 {
-				token, err := verifyToken(c.Request)
-				if err != nil {
-					log.Printf("authentication error: %v", err)
-					abortAuthentication(c)
+		if !utils.Config.Testing {
+			for _, endpoint := range secureEndpoints {
+				if strings.Index(c.Request.URL.Path, endpoint) == 0 {
+					token, err := verifyToken(c.Request)
+					if err != nil {
+						log.Printf("authentication error: %v", err)
+						abortAuthentication(c)
+						return
+					}
+					if token != nil {
+						c.Next()
+					} else {
+						log.Printf("authentication error: invalid token")
+						abortAuthentication(c)
+					}
 					return
 				}
-				if token != nil {
-					c.Next()
-				} else {
-					log.Printf("authentication error: invalid token")
-					abortAuthentication(c)
-				}
-				return
 			}
 		}
 

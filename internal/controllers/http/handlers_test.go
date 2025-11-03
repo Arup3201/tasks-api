@@ -2,6 +2,7 @@ package httpController
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +14,7 @@ import (
 	entities "github.com/Arup3201/gotasks/internal/entities/task"
 	services "github.com/Arup3201/gotasks/internal/services/domain/task"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func getTestContext(t testing.TB, w http.ResponseWriter, r *http.Request) (*gin.Context, *gin.Engine) {
@@ -26,27 +28,30 @@ func getTestContext(t testing.TB, w http.ResponseWriter, r *http.Request) (*gin.
 	return ctx, engine
 }
 
+func generateTasks(num int, t testing.TB) []entities.Task {
+	t.Helper()
+
+	tasks := []entities.Task{}
+	for i := range num {
+		uuid_, _ := uuid.NewUUID()
+		id := uuid_.String()
+		tasks = append(tasks, entities.Task{
+			Id:          id,
+			Title:       fmt.Sprintf("Task %d", i+1),
+			Description: "No description",
+			IsCompleted: false,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		})
+	}
+
+	return tasks
+}
+
 func TestGetTasks(t *testing.T) {
 	t.Run("get all tasks", func(t *testing.T) {
 		repo := &MockRepository{
-			tasks: []entities.Task{
-				{
-					Id:          1,
-					Title:       "Task 1",
-					Description: "No description",
-					IsCompleted: false,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-				{
-					Id:          2,
-					Title:       "Task 2",
-					Description: "No description",
-					IsCompleted: true,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-			},
+			tasks: generateTasks(2, t),
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
 		routeHandler := GetRouteHandler(serviceHandler)
@@ -95,7 +100,7 @@ func TestGetTasks(t *testing.T) {
 }
 
 func TestAddTask(t *testing.T) {
-	t.Run("add a task success", func(t *testing.T) {
+	t.Run("add a task with correct information", func(t *testing.T) {
 		repo := &MockRepository{
 			tasks: []entities.Task{},
 		}
@@ -118,10 +123,6 @@ func TestAddTask(t *testing.T) {
 		if err != nil {
 			log.Fatal("JSON decoding failed")
 		}
-		want := 1
-		if got.Id != want {
-			t.Errorf("task ID expected %d but got %d", want, got.Id)
-		}
 		title := "Test task"
 		if got.Title != title {
 			t.Errorf("task title expected %s but got %s", title, got.Title)
@@ -134,18 +135,10 @@ func TestAddTask(t *testing.T) {
 			t.Errorf("task should have created_at or updated_at")
 		}
 	})
-	t.Run("add task increases ID", func(t *testing.T) {
+	t.Run("add task total tasks by one", func(t *testing.T) {
+		tasks := generateTasks(1, t)
 		repo := &MockRepository{
-			tasks: []entities.Task{
-				{
-					Id:          1,
-					Title:       "Task 1",
-					Description: "No description",
-					IsCompleted: false,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-			},
+			tasks: tasks,
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
 		routeHandler := GetRouteHandler(serviceHandler)
@@ -166,9 +159,17 @@ func TestAddTask(t *testing.T) {
 		if err != nil {
 			log.Fatal("JSON decoding failed")
 		}
+		engine.GET("/tasks", routeHandler.GetTasks)
+		engine.ServeHTTP(response, ctx.Request)
+		routeHandler.GetTasks(ctx)
+		var allTasks []entities.Task
 		want := 2
-		if got.Id != want {
-			t.Errorf("expected ID to be %d, but got %d", want, got.Id)
+		err = json.NewDecoder(response.Body).Decode(&allTasks)
+		if err != nil {
+			log.Fatal("JSON decoding failed")
+		}
+		if len(allTasks) != want {
+			t.Errorf("response is wrong, expected %d tasks but got %d tasks", want, len(allTasks))
 		}
 	})
 	t.Run("add task fail for missing title", func(t *testing.T) {
@@ -198,29 +199,13 @@ func TestAddTask(t *testing.T) {
 
 func TestGetTask(t *testing.T) {
 	t.Run("get task success", func(t *testing.T) {
+		tasks := generateTasks(2, t)
 		repo := &MockRepository{
-			tasks: []entities.Task{
-				{
-					Id:          1,
-					Title:       "Task 1",
-					Description: "No description",
-					IsCompleted: false,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-				{
-					Id:          2,
-					Title:       "Task 2",
-					Description: "No description",
-					IsCompleted: true,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-			},
+			tasks: tasks,
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
 		routeHandler := GetRouteHandler(serviceHandler)
-		request, _ := http.NewRequest("GET", "/tasks/2", nil)
+		request, _ := http.NewRequest("GET", fmt.Sprintf("/tasks/%s", tasks[1].Id), nil)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
 		engine.GET("/tasks/:id", routeHandler.GetTask)
@@ -232,35 +217,19 @@ func TestGetTask(t *testing.T) {
 		if err != nil {
 			log.Fatal("JSON decoding failed")
 		}
-		want := 2
+		want := tasks[1].Id
 		if got.Id != want {
-			t.Errorf("response is wrong, expected task with ID %d but got %d tasks", want, got.Id)
+			t.Errorf("response is wrong, expected task with ID %s but got %s tasks", want, got.Id)
 		}
 	})
-	t.Run("get task success", func(t *testing.T) {
+	t.Run("get task not found error", func(t *testing.T) {
+		tasks := generateTasks(2, t)
 		repo := &MockRepository{
-			tasks: []entities.Task{
-				{
-					Id:          1,
-					Title:       "Task 1",
-					Description: "No description",
-					IsCompleted: false,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-				{
-					Id:          2,
-					Title:       "Task 2",
-					Description: "No description",
-					IsCompleted: true,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-			},
+			tasks: tasks,
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
 		routeHandler := GetRouteHandler(serviceHandler)
-		request, _ := http.NewRequest("GET", "/tasks/3", nil)
+		request, _ := http.NewRequest("GET", "/tasks/abcde109", nil)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
 		engine.Use(middlewares.HttpErrorResponse())
@@ -277,32 +246,16 @@ func TestGetTask(t *testing.T) {
 
 func TestUpdateTask(t *testing.T) {
 	t.Run("update task with new title", func(t *testing.T) {
+		tasks := generateTasks(2, t)
 		repo := &MockRepository{
-			tasks: []entities.Task{
-				{
-					Id:          1,
-					Title:       "Task 1",
-					Description: "No description",
-					IsCompleted: false,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-				{
-					Id:          2,
-					Title:       "Task 2",
-					Description: "No description",
-					IsCompleted: true,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-			},
+			tasks: tasks,
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
 		routeHandler := GetRouteHandler(serviceHandler)
 		payload := strings.NewReader(`{
 			"title": "Test 2 (edited)"
 		}`)
-		request, _ := http.NewRequest("PATCH", "/tasks/2", payload)
+		request, _ := http.NewRequest("PATCH", fmt.Sprintf("/tasks/%s", tasks[1].Id), payload)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
 		engine.PATCH("/tasks/:id", routeHandler.UpdateTask)
@@ -320,32 +273,16 @@ func TestUpdateTask(t *testing.T) {
 		}
 	})
 	t.Run("update task with new description", func(t *testing.T) {
+		tasks := generateTasks(2, t)
 		repo := &MockRepository{
-			tasks: []entities.Task{
-				{
-					Id:          1,
-					Title:       "Task 1",
-					Description: "No description",
-					IsCompleted: false,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-				{
-					Id:          2,
-					Title:       "Task 2",
-					Description: "No description",
-					IsCompleted: true,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-			},
+			tasks: tasks,
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
 		routeHandler := GetRouteHandler(serviceHandler)
 		payload := strings.NewReader(`{
 			"description": "Test 2 description (edited)"
 		}`)
-		request, _ := http.NewRequest("PATCH", "/tasks/2", payload)
+		request, _ := http.NewRequest("PATCH", fmt.Sprintf("/tasks/%s", tasks[1].Id), payload)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
 		engine.PATCH("/tasks/:id", routeHandler.UpdateTask)
@@ -363,32 +300,16 @@ func TestUpdateTask(t *testing.T) {
 		}
 	})
 	t.Run("update task with new is_completed", func(t *testing.T) {
+		tasks := generateTasks(2, t)
 		repo := &MockRepository{
-			tasks: []entities.Task{
-				{
-					Id:          1,
-					Title:       "Task 1",
-					Description: "No description",
-					IsCompleted: false,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-				{
-					Id:          2,
-					Title:       "Task 2",
-					Description: "No description",
-					IsCompleted: true,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-			},
+			tasks: tasks,
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
 		routeHandler := GetRouteHandler(serviceHandler)
 		payload := strings.NewReader(`{
 			"is_completed": true
 		}`)
-		request, _ := http.NewRequest("PATCH", "/tasks/1", payload)
+		request, _ := http.NewRequest("PATCH", fmt.Sprintf("/tasks/%s", tasks[0].Id), payload)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
 		engine.PATCH("/tasks/:id", routeHandler.UpdateTask)
@@ -406,32 +327,16 @@ func TestUpdateTask(t *testing.T) {
 		}
 	})
 	t.Run("update task fail not found", func(t *testing.T) {
+		tasks := generateTasks(2, t)
 		repo := &MockRepository{
-			tasks: []entities.Task{
-				{
-					Id:          1,
-					Title:       "Task 1",
-					Description: "No description",
-					IsCompleted: false,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-				{
-					Id:          2,
-					Title:       "Task 2",
-					Description: "No description",
-					IsCompleted: true,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-			},
+			tasks: tasks,
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
 		routeHandler := GetRouteHandler(serviceHandler)
 		payload := strings.NewReader(`{
 			"title": "Test 3 (edited)"
 		}`)
-		request, _ := http.NewRequest("PATCH", "/tasks/3", payload)
+		request, _ := http.NewRequest("PATCH", "/tasks/abcd109", payload)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
 		engine.Use(middlewares.HttpErrorResponse())
@@ -445,30 +350,14 @@ func TestUpdateTask(t *testing.T) {
 		}
 	})
 	t.Run("update task with no op", func(t *testing.T) {
+		tasks := generateTasks(2, t)
 		repo := &MockRepository{
-			tasks: []entities.Task{
-				{
-					Id:          1,
-					Title:       "Task 1",
-					Description: "No description",
-					IsCompleted: false,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-				{
-					Id:          2,
-					Title:       "Task 2",
-					Description: "No description",
-					IsCompleted: true,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-			},
+			tasks: tasks,
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
 		routeHandler := GetRouteHandler(serviceHandler)
 		payload := strings.NewReader(`{}`)
-		request, _ := http.NewRequest("PATCH", "/tasks/3", payload)
+		request, _ := http.NewRequest("PATCH", fmt.Sprintf("/tasks/%s", tasks[0].Id), payload)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
 		engine.Use(middlewares.HttpErrorResponse())
@@ -485,29 +374,13 @@ func TestUpdateTask(t *testing.T) {
 
 func TestDeleteTask(t *testing.T) {
 	t.Run("delete task success", func(t *testing.T) {
+		tasks := generateTasks(2, t)
 		repo := &MockRepository{
-			tasks: []entities.Task{
-				{
-					Id:          1,
-					Title:       "Task 1",
-					Description: "No description",
-					IsCompleted: false,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-				{
-					Id:          2,
-					Title:       "Task 2",
-					Description: "No description",
-					IsCompleted: true,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-			},
+			tasks: tasks,
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
 		routeHandler := GetRouteHandler(serviceHandler)
-		request, _ := http.NewRequest("DELETE", "/tasks/2", nil)
+		request, _ := http.NewRequest("DELETE", fmt.Sprintf("/tasks/%s", tasks[1].Id), nil)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
 		engine.DELETE("/tasks/:id", routeHandler.DeleteTask)
@@ -518,35 +391,19 @@ func TestDeleteTask(t *testing.T) {
 		if got := response.Result().StatusCode; got != want {
 			t.Errorf("delete failed, expected status code %d but got %d", want, got)
 		}
-		id := "2"
-		if got := response.Body.String(); got != id {
+		id := tasks[1].Id
+		if got := strings.Trim(response.Body.String(), "\""); got != id {
 			t.Errorf("delete did return ID, expected %s but got %s", id, got)
 		}
 	})
 	t.Run("delete task fail not found", func(t *testing.T) {
+		tasks := generateTasks(2, t)
 		repo := &MockRepository{
-			tasks: []entities.Task{
-				{
-					Id:          1,
-					Title:       "Task 1",
-					Description: "No description",
-					IsCompleted: false,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-				{
-					Id:          2,
-					Title:       "Task 2",
-					Description: "No description",
-					IsCompleted: true,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-			},
+			tasks: tasks,
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
 		routeHandler := GetRouteHandler(serviceHandler)
-		request, _ := http.NewRequest("DELETE", "/tasks/3", nil)
+		request, _ := http.NewRequest("DELETE", "/tasks/abcd109", nil)
 		response := httptest.NewRecorder()
 		ctx, engine := getTestContext(t, response, request)
 		engine.Use(middlewares.HttpErrorResponse())
@@ -563,33 +420,9 @@ func TestDeleteTask(t *testing.T) {
 
 func TestSearchTasks(t *testing.T) {
 	t.Run("search tasks success", func(t *testing.T) {
+		tasks := generateTasks(2, t)
 		repo := &MockRepository{
-			tasks: []entities.Task{
-				{
-					Id:          1,
-					Title:       "Task 1",
-					Description: "No description",
-					IsCompleted: false,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-				{
-					Id:          2,
-					Title:       "Task 2",
-					Description: "No description",
-					IsCompleted: true,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-				{
-					Id:          3,
-					Title:       "Task 2",
-					Description: "Task 2 additional",
-					IsCompleted: false,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-			},
+			tasks: tasks,
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
 		routeHandler := GetRouteHandler(serviceHandler)
@@ -605,39 +438,15 @@ func TestSearchTasks(t *testing.T) {
 		if err != nil {
 			log.Fatal("JSON decoding failed")
 		}
-		want := 2
+		want := 1
 		if len(got) != want {
 			t.Errorf("response is wrong, expected %d searched tasks but got %d tasks", want, len(got))
 		}
 	})
 	t.Run("search tasks no task found", func(t *testing.T) {
+		tasks := generateTasks(2, t)
 		repo := &MockRepository{
-			tasks: []entities.Task{
-				{
-					Id:          1,
-					Title:       "Task 1",
-					Description: "No description",
-					IsCompleted: false,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-				{
-					Id:          2,
-					Title:       "Task 2",
-					Description: "No description",
-					IsCompleted: true,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-				{
-					Id:          3,
-					Title:       "Task 2",
-					Description: "Task 2 additional",
-					IsCompleted: false,
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
-				},
-			},
+			tasks: tasks,
 		}
 		serviceHandler, _ := services.NewTaskService(repo)
 		routeHandler := GetRouteHandler(serviceHandler)

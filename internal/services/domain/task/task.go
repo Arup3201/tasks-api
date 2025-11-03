@@ -8,22 +8,16 @@ import (
 	"github.com/Arup3201/gotasks/internal/errors"
 	"github.com/Arup3201/gotasks/internal/services"
 	"github.com/Arup3201/gotasks/internal/storages"
+	"github.com/google/uuid"
 )
 
 type TaskService struct {
 	taskRepository storages.TaskRepository
-	lastTaskId     int
 }
 
 func NewTaskService(repo storages.TaskRepository) (*TaskService, error) {
-	tasks, err := repo.List()
-	if err != nil {
-		return nil, err
-	}
-
 	return &TaskService{
 		taskRepository: repo,
-		lastTaskId:     len(tasks),
 	}, nil
 }
 
@@ -42,16 +36,19 @@ func (ts *TaskService) CreateTask(title, description string) (*task.Task, error)
 		})
 	}
 
-	task, err := ts.taskRepository.Insert(ts.lastTaskId+1, title, description)
+	taskId, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
 	}
-	ts.lastTaskId += 1
+	task, err := ts.taskRepository.Insert(taskId.String(), title, description)
+	if err != nil {
+		return nil, err
+	}
 
 	return task, nil
 }
 
-func (ts *TaskService) GetTask(taskId int) (*task.Task, error) {
+func (ts *TaskService) GetTask(taskId string) (*task.Task, error) {
 	task, err := ts.taskRepository.Get(taskId)
 	if err != nil {
 		return nil, err
@@ -69,7 +66,7 @@ func (ts *TaskService) GetAllTasks() ([]task.Task, error) {
 	return tasks, nil
 }
 
-func (ts *TaskService) UpdateTask(taskId int, data services.UpdateTaskData) (*task.Task, error) {
+func (ts *TaskService) UpdateTask(taskId string, data services.UpdateTaskData) (*task.Task, error) {
 	update := map[string]any{}
 
 	if data.Title != nil {
@@ -103,13 +100,13 @@ func (ts *TaskService) UpdateTask(taskId int, data services.UpdateTaskData) (*ta
 		return nil, err
 	}
 	if task == nil {
-		return nil, errors.NotFoundError(fmt.Sprintf("Task with ID '%d' not found", taskId))
+		return nil, errors.NotFoundError(fmt.Sprintf("Task with ID '%s' not found", taskId))
 	}
 
 	return task, nil
 }
 
-func (ts *TaskService) DeleteTask(taskId int) (*int, error) {
+func (ts *TaskService) DeleteTask(taskId string) (*string, error) {
 	dId, err := ts.taskRepository.Delete(taskId)
 	if err != nil {
 		return nil, err
@@ -139,8 +136,4 @@ func (ts *TaskService) SearchTasks(query string) ([]task.Task, error) {
 	}
 
 	return matches, nil
-}
-
-func (ts *TaskService) UpdateLastInsertedId(lastInsertedId int) {
-	ts.lastTaskId = lastInsertedId
 }

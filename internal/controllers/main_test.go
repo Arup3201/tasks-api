@@ -13,11 +13,11 @@ import (
 	"time"
 
 	controllers "github.com/Arup3201/gotasks/internal/controllers/http"
-	httpController "github.com/Arup3201/gotasks/internal/controllers/http"
-	"github.com/Arup3201/gotasks/internal/entities/task"
+	entities "github.com/Arup3201/gotasks/internal/entities/task"
 	"github.com/Arup3201/gotasks/internal/storages"
 	"github.com/Arup3201/gotasks/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func TestMain(m *testing.M) {
@@ -47,7 +47,7 @@ func setUp() func() {
 	}
 }
 
-func prepareDBTasks(n int) {
+func prepareDBTasks(n int) []entities.Task {
 	storage, err := storages.New(storages.Postgres)
 	if err != nil {
 		log.Fatalf("storage create error: %v", err)
@@ -57,7 +57,8 @@ func prepareDBTasks(n int) {
 	for _, task := range tasks {
 		storage.Insert(task.Id, task.Title, task.Description)
 	}
-	httpController.Server.UpdateLastInsertedId(n)
+
+	return tasks
 }
 
 func cleanDB() {
@@ -79,11 +80,13 @@ func cleanDB() {
 	}
 }
 
-func generateTasks(n int) []task.Task {
-	tasks := []task.Task{}
-	for i := range n {
-		task := task.Task{
-			Id:          i + 1,
+func generateTasks(n int) []entities.Task {
+	tasks := []entities.Task{}
+	for range n {
+		uuid_, _ := uuid.NewUUID()
+		id := uuid_.String()
+		task := entities.Task{
+			Id:          id,
 			Title:       fmt.Sprintf("title - %d", rand.Intn(9999)),
 			Description: fmt.Sprintf("description - %d", rand.Intn(9999)),
 			IsCompleted: false,

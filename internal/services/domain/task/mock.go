@@ -21,17 +21,17 @@ func NewMockTaskRepository() *mockTaskRepository {
 	}
 }
 
-func (tr *mockTaskRepository) Get(taskId int) (*task.Task, error) {
+func (tr *mockTaskRepository) Get(taskId string) (*task.Task, error) {
 	for _, task := range tr.tasks {
 		if task.Id == taskId {
 			return &task, nil
 		}
 	}
 
-	return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
+	return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %s not found", taskId))
 }
 
-func (tr *mockTaskRepository) Insert(id int, title, description string) (*task.Task, error) {
+func (tr *mockTaskRepository) Insert(id string, title, description string) (*task.Task, error) {
 	task := task.Task{
 		Id:          id,
 		Title:       title,
@@ -44,7 +44,7 @@ func (tr *mockTaskRepository) Insert(id int, title, description string) (*task.T
 	return &task, nil
 }
 
-func (tr *mockTaskRepository) Update(taskId int, data map[string]any) (*task.Task, error) {
+func (tr *mockTaskRepository) Update(taskId string, data map[string]any) (*task.Task, error) {
 	for i, task := range tr.tasks {
 		if task.Id == taskId {
 			t := reflect.ValueOf(&task).Elem()
@@ -63,10 +63,10 @@ func (tr *mockTaskRepository) Update(taskId int, data map[string]any) (*task.Tas
 		}
 	}
 
-	return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
+	return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %s not found", taskId))
 }
 
-func (tr *mockTaskRepository) Delete(taskId int) (*int, error) {
+func (tr *mockTaskRepository) Delete(taskId string) (*string, error) {
 	for i, task := range tr.tasks {
 		if task.Id == taskId {
 			tr.tasks = append(tr.tasks[:i], tr.tasks[i+1:]...)
@@ -74,7 +74,7 @@ func (tr *mockTaskRepository) Delete(taskId int) (*int, error) {
 		}
 	}
 
-	return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
+	return nil, errors.NotFoundError(fmt.Sprintf("Task with ID %s not found", taskId))
 }
 
 func (tr *mockTaskRepository) List() ([]task.Task, error) {

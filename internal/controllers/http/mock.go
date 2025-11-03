@@ -13,17 +13,17 @@ type MockRepository struct {
 	tasks []entities.Task
 }
 
-func (tr *MockRepository) Get(taskId int) (*entities.Task, error) {
+func (tr *MockRepository) Get(taskId string) (*entities.Task, error) {
 	for _, task := range tr.tasks {
 		if task.Id == taskId {
 			return &task, nil
 		}
 	}
 
-	return nil, serverErrors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
+	return nil, serverErrors.NotFoundError(fmt.Sprintf("Task with ID %s not found", taskId))
 }
 
-func (tr *MockRepository) Insert(id int, title, description string) (*entities.Task, error) {
+func (tr *MockRepository) Insert(id string, title, description string) (*entities.Task, error) {
 	task := entities.Task{
 		Id:          id,
 		Title:       title,
@@ -36,7 +36,7 @@ func (tr *MockRepository) Insert(id int, title, description string) (*entities.T
 	return &task, nil
 }
 
-func (tr *MockRepository) Update(taskId int, data map[string]any) (*entities.Task, error) {
+func (tr *MockRepository) Update(taskId string, data map[string]any) (*entities.Task, error) {
 	for i, task := range tr.tasks {
 		if task.Id == taskId {
 			t := reflect.ValueOf(&task).Elem()
@@ -55,10 +55,10 @@ func (tr *MockRepository) Update(taskId int, data map[string]any) (*entities.Tas
 		}
 	}
 
-	return nil, serverErrors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
+	return nil, serverErrors.NotFoundError(fmt.Sprintf("Task with ID %s not found", taskId))
 }
 
-func (tr *MockRepository) Delete(taskId int) (*int, error) {
+func (tr *MockRepository) Delete(taskId string) (*string, error) {
 	for i, task := range tr.tasks {
 		if task.Id == taskId {
 			tr.tasks = append(tr.tasks[:i], tr.tasks[i+1:]...)
@@ -66,7 +66,7 @@ func (tr *MockRepository) Delete(taskId int) (*int, error) {
 		}
 	}
 
-	return nil, serverErrors.NotFoundError(fmt.Sprintf("Task with ID %d not found", taskId))
+	return nil, serverErrors.NotFoundError(fmt.Sprintf("Task with ID %s not found", taskId))
 }
 
 func (tr *MockRepository) List() ([]entities.Task, error) {
