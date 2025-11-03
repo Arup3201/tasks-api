@@ -48,8 +48,5 @@ jobs:
         DBPASS: 1234
         DBPORT: 5432
         DBNAME: tests
-        KEYCLOAK_SERVER_URL: ${{ vars.KEYCLOAK_SERVER_URL }}
-        KEYCLOAK_REALM: ${{ vars.KEYCLOAK_REALM }}
-        KEYCLOAK_CLIENT_ID: ${{ vars.KEYCLOAK_CLIENT_ID }}
-        KEYCLOAK_CLIENT_SECRET: ${{ vars.KEYCLOAK_CLIENT_SECRET }}
+        TESTING: true
       run: go test -v ./...
