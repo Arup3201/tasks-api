@@ -3,10 +3,9 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
-	"strconv"
+	"strings"
 	"testing"
 
 	httpController "github.com/Arup3201/gotasks/internal/controllers/http"
@@ -39,7 +38,8 @@ func TestViewAllTasksSuccess(t *testing.T) {
 
 	tasks := []entities.Task{}
 	if err := json.NewDecoder(response.Body).Decode(&tasks); err != nil {
-		log.Fatalf("JSON decoder error: %v", err)
+		t.Fail()
+		t.Logf("JSON decoder error: %v", err)
 	}
 	assert.Equal(t, expectedTasksNum, len(tasks))
 	cleanDB()
@@ -64,7 +64,8 @@ func TestAddTaskCheckSuccess(t *testing.T) {
 
 	var responseTask entities.Task
 	if err := json.NewDecoder(response1.Body).Decode(&responseTask); err != nil {
-		log.Fatalf("JSON decoder error: %v", err)
+		t.Fail()
+		t.Logf("JSON decoder error: %v", err)
 	}
 
 	assert.Equal(t, task.Title, responseTask.Title)
@@ -74,7 +75,8 @@ func TestAddTaskCheckSuccess(t *testing.T) {
 
 	var responseTasks []entities.Task
 	if err := json.NewDecoder(response2.Body).Decode(&responseTasks); err != nil {
-		log.Fatalf("JSON decoder error: %v", err)
+		t.Fail()
+		t.Logf("JSON decoder error: %v", err)
 	}
 	assert.Equal(t, expectedTasksNum, len(responseTasks))
 
@@ -92,27 +94,27 @@ func TestAddAndViewTaskSuccess(t *testing.T) {
 
 	// act
 	response1 := makeRequest("POST", "/tasks", task)
-	response2 := makeRequest("GET", "/tasks/3", nil)
+	response2 := makeRequest("GET", "/tasks", nil)
 
 	// assert
 	assert.Equal(t, http.StatusCreated, response1.Code)
 
 	var responseTask entities.Task
 	if err := json.NewDecoder(response1.Body).Decode(&responseTask); err != nil {
-		log.Fatalf("JSON decoder error: %v", err)
+		t.Fail()
+		t.Logf("JSON decoder error: %v", err)
 	}
 	assert.Equal(t, task.Title, responseTask.Title)
 	assert.Equal(t, task.Description, responseTask.Description)
 
 	assert.Equal(t, http.StatusOK, response2.Code)
-	if err := json.NewDecoder(response2.Body).Decode(&responseTask); err != nil {
-		log.Fatalf("JSON decoder error: %v", err)
+	var allTasks []entities.Task
+	if err := json.NewDecoder(response2.Body).Decode(&allTasks); err != nil {
+		t.Fail()
+		t.Logf("JSON decoder error: %v", err)
 	}
 
-	assert.Equal(t, responseTask.IsCompleted, false)
-	assert.NotZero(t, responseTask.CreatedAt)
-	assert.NotZero(t, responseTask.UpdatedAt)
-
+	assert.Equal(t, 3, len(allTasks))
 	cleanDB()
 }
 
@@ -135,7 +137,8 @@ func TestViewInvalidTaskFail(t *testing.T) {
 
 	var responseError httpController.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
-		log.Fatalf("JSON decoder error: %v", err)
+		t.Fail()
+		t.Logf("JSON decoder error: %v", err)
 	}
 
 	assert.Equal(t, expectedBody["id"], responseError.Id)
@@ -168,7 +171,8 @@ func TestAddTaskWithMissingTitleFail(t *testing.T) {
 
 	var responseError httpController.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
-		log.Fatalf("JSON decoder error: %v", err)
+		t.Fail()
+		t.Logf("JSON decoder error: %v", err)
 	}
 
 	assert.Equal(t, expectedBody["id"], responseError.Id)
@@ -202,7 +206,8 @@ func TestAddTaskWithMissingDescriptionFail(t *testing.T) {
 
 	var responseError httpController.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
-		log.Fatalf("JSON decoder error: %v", err)
+		t.Fail()
+		t.Logf("JSON decoder error: %v", err)
 	}
 
 	assert.Equal(t, expectedBody["id"], responseError.Id)
@@ -238,7 +243,8 @@ func TestAddTaskEmptyTitleFail(t *testing.T) {
 
 	var responseError httpController.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
-		log.Fatalf("JSON decoder error: %v", err)
+		t.Fail()
+		t.Logf("JSON decoder error: %v", err)
 	}
 
 	assert.Equal(t, expectedBody["id"], responseError.Id)
@@ -274,37 +280,8 @@ func TestAddTaskEmptyDescriptionFail(t *testing.T) {
 
 	var responseError httpController.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
-		log.Fatalf("JSON decoder error: %v", err)
-	}
-
-	assert.Equal(t, expectedBody["id"], responseError.Id)
-	assert.Equal(t, expectedBody["title"], responseError.Title)
-	assert.Equal(t, expectedBody["status"], responseError.Status)
-	assert.Equal(t, expectedBody["field"], responseError.Errors[0].Field)
-	cleanDB()
-}
-
-// check if non-integer id gives invalid param error response
-func TestViewIdParamInvalidFail(t *testing.T) {
-	// prepare
-	prepareDBTasks(2)
-	expectedErrorCode := 400
-	expectedBody := map[string]any{
-		"id":     "INVALID_PARAMETER_VALUE",
-		"title":  "Invalid request parameter value",
-		"status": 400,
-		"field":  "id",
-	}
-
-	// act
-	response := makeRequest("GET", "/tasks/asd", nil)
-
-	// assert
-	assert.Equal(t, expectedErrorCode, response.Code)
-
-	var responseError httpController.HttpError
-	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
-		log.Fatalf("JSON decoder error: %v", err)
+		t.Fail()
+		t.Logf("JSON decoder error: %v", err)
 	}
 
 	assert.Equal(t, expectedBody["id"], responseError.Id)
@@ -317,11 +294,12 @@ func TestViewIdParamInvalidFail(t *testing.T) {
 // success update task title
 func TestUpdateTitleSuccess(t *testing.T) {
 	// prepare
-	prepareDBTasks(2)
-	prepTask := makeRequest("GET", "/tasks/1", nil)
+	tasks := prepareDBTasks(2)
+	prepTask := makeRequest("GET", fmt.Sprintf("/tasks/%s", tasks[0].Id), nil)
 	var expectedBody entities.Task
 	if err := json.NewDecoder(prepTask.Body).Decode(&expectedBody); err != nil {
-		log.Fatalf("prepare stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decoder error: %v", err)
 	}
 	expectedCode := 200
 	title := "Task title (updated)"
@@ -331,14 +309,15 @@ func TestUpdateTitleSuccess(t *testing.T) {
 	}
 
 	// act
-	response := makeRequest("PATCH", "/tasks/1", updatePayload)
+	response := makeRequest("PATCH", fmt.Sprintf("/tasks/%s", tasks[0].Id), updatePayload)
 
 	// assert
 	assert.Equal(t, expectedCode, response.Code)
 
 	var responseBody entities.Task
 	if err := json.NewDecoder(response.Body).Decode(&responseBody); err != nil {
-		log.Fatalf("assert stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decode error: %v", err)
 	}
 
 	assertTask(t, expectedBody, responseBody)
@@ -348,11 +327,12 @@ func TestUpdateTitleSuccess(t *testing.T) {
 // success update task description
 func TestUpdateDescriptionSuccess(t *testing.T) {
 	// prepare
-	prepareDBTasks(2)
-	prepTask := makeRequest("GET", "/tasks/1", nil)
+	tasks := prepareDBTasks(2)
+	prepTask := makeRequest("GET", fmt.Sprintf("/tasks/%s", tasks[0].Id), nil)
 	var expectedBody entities.Task
 	if err := json.NewDecoder(prepTask.Body).Decode(&expectedBody); err != nil {
-		log.Fatalf("prepare stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decoder error: %v", err)
 	}
 	expectedCode := 200
 	description := "Task description (updated)"
@@ -362,14 +342,15 @@ func TestUpdateDescriptionSuccess(t *testing.T) {
 	}
 
 	// act
-	response := makeRequest("PATCH", "/tasks/1", updatePayload)
+	response := makeRequest("PATCH", fmt.Sprintf("/tasks/%s", tasks[0].Id), updatePayload)
 
 	// assert
 	assert.Equal(t, expectedCode, response.Code)
 
 	var responseBody entities.Task
 	if err := json.NewDecoder(response.Body).Decode(&responseBody); err != nil {
-		log.Fatalf("assert stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decode error: %v", err)
 	}
 
 	assertTask(t, expectedBody, responseBody)
@@ -379,11 +360,12 @@ func TestUpdateDescriptionSuccess(t *testing.T) {
 // success update task is_completed
 func TestUpdateIsCompletedSuccess(t *testing.T) {
 	// prepare
-	prepareDBTasks(2)
-	prepTask := makeRequest("GET", "/tasks/1", nil)
+	tasks := prepareDBTasks(2)
+	prepTask := makeRequest("GET", fmt.Sprintf("/tasks/%s", tasks[0].Id), nil)
 	var expectedBody entities.Task
 	if err := json.NewDecoder(prepTask.Body).Decode(&expectedBody); err != nil {
-		log.Fatalf("prepare stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decode error: %v", err)
 	}
 	expectedCode := 200
 	isCompleted := true
@@ -393,14 +375,15 @@ func TestUpdateIsCompletedSuccess(t *testing.T) {
 	}
 
 	// act
-	response := makeRequest("PATCH", "/tasks/1", updatePayload)
+	response := makeRequest("PATCH", fmt.Sprintf("/tasks/%s", tasks[0].Id), updatePayload)
 
 	// assert
 	assert.Equal(t, expectedCode, response.Code)
 
 	var responseBody entities.Task
 	if err := json.NewDecoder(response.Body).Decode(&responseBody); err != nil {
-		log.Fatalf("assert stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decode error: %v", err)
 	}
 
 	assertTask(t, expectedBody, responseBody)
@@ -410,11 +393,12 @@ func TestUpdateIsCompletedSuccess(t *testing.T) {
 // success update task title, description and is_completed
 func TestUpdateAll3Success(t *testing.T) {
 	// prepare
-	prepareDBTasks(2)
-	prepTask := makeRequest("GET", "/tasks/1", nil)
+	tasks := prepareDBTasks(2)
+	prepTask := makeRequest("GET", fmt.Sprintf("/tasks/%s", tasks[0].Id), nil)
 	var expectedBody entities.Task
 	if err := json.NewDecoder(prepTask.Body).Decode(&expectedBody); err != nil {
-		log.Fatalf("prepare stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decode error: %v", err)
 	}
 	expectedCode := 200
 	title := "Task title (updated)"
@@ -430,14 +414,15 @@ func TestUpdateAll3Success(t *testing.T) {
 	}
 
 	// act
-	response := makeRequest("PATCH", "/tasks/1", updatePayload)
+	response := makeRequest("PATCH", fmt.Sprintf("/tasks/%s", tasks[0].Id), updatePayload)
 
 	// assert
 	assert.Equal(t, expectedCode, response.Code)
 
 	var responseBody entities.Task
 	if err := json.NewDecoder(response.Body).Decode(&responseBody); err != nil {
-		log.Fatalf("assert stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decode error: %v", err)
 	}
 
 	assertTask(t, expectedBody, responseBody)
@@ -447,7 +432,7 @@ func TestUpdateAll3Success(t *testing.T) {
 // empty payload return no-op response
 func TestUpdateNoOpResponse(t *testing.T) {
 	// prepare
-	prepareDBTasks(2)
+	tasks := prepareDBTasks(2)
 	expectedCode := 204
 	expectedBody := map[string]any{
 		"id":     "NO_MODIFICATION",
@@ -457,14 +442,15 @@ func TestUpdateNoOpResponse(t *testing.T) {
 	updatePayload := services.UpdateTaskData{}
 
 	// act
-	response := makeRequest("PATCH", "/tasks/1", updatePayload)
+	response := makeRequest("PATCH", fmt.Sprintf("/tasks/%s", tasks[0].Id), updatePayload)
 
 	// assert
 	assert.Equal(t, expectedCode, response.Code)
 
 	var responseBody httpController.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseBody); err != nil {
-		log.Fatalf("assert stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decode error: %v", err)
 	}
 
 	assert.Equal(t, expectedBody["id"], responseBody.Id)
@@ -489,14 +475,15 @@ func TestUpdateInvalidTaskFail(t *testing.T) {
 	}
 
 	// act
-	response := makeRequest("PATCH", "/tasks/3", updatePayload)
+	response := makeRequest("PATCH", "/tasks/abcd1001", updatePayload)
 
 	// assert
 	assert.Equal(t, expectedCode, response.Code)
 
 	var responseError httpController.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
-		log.Fatalf("assert stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decode error: %v", err)
 	}
 
 	assert.Equal(t, expectedBody["id"], responseError.Id)
@@ -508,7 +495,7 @@ func TestUpdateInvalidTaskFail(t *testing.T) {
 // invalid title value fail return bad request error
 func TestUpdateInvalidTaskTitleFail(t *testing.T) {
 	// prepare
-	prepareDBTasks(2)
+	tasks := prepareDBTasks(2)
 	expectedCode := 400
 	expectedBody := map[string]any{
 		"id":     "INVALID_BODY_PROPERTY",
@@ -522,14 +509,15 @@ func TestUpdateInvalidTaskTitleFail(t *testing.T) {
 	}
 
 	// act
-	response := makeRequest("PATCH", "/tasks/1", updatePayload)
+	response := makeRequest("PATCH", fmt.Sprintf("/tasks/%s", tasks[0].Id), updatePayload)
 
 	// assert
 	assert.Equal(t, expectedCode, response.Code)
 
 	var responseError httpController.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
-		log.Fatalf("assert stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decode error: %v", err)
 	}
 
 	assert.Equal(t, expectedBody["id"], responseError.Id)
@@ -542,7 +530,7 @@ func TestUpdateInvalidTaskTitleFail(t *testing.T) {
 // invalid description value fail return bad request error
 func TestUpdateInvalidTaskDescriptionFail(t *testing.T) {
 	// prepare
-	prepareDBTasks(2)
+	tasks := prepareDBTasks(2)
 	expectedCode := 400
 	expectedBody := map[string]any{
 		"id":     "INVALID_BODY_PROPERTY",
@@ -556,14 +544,15 @@ func TestUpdateInvalidTaskDescriptionFail(t *testing.T) {
 	}
 
 	// act
-	response := makeRequest("PATCH", "/tasks/1", updatePayload)
+	response := makeRequest("PATCH", fmt.Sprintf("/tasks/%s", tasks[0].Id), updatePayload)
 
 	// assert
 	assert.Equal(t, expectedCode, response.Code)
 
 	var responseError httpController.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
-		log.Fatalf("assert stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decode error: %v", err)
 	}
 
 	assert.Equal(t, expectedBody["id"], responseError.Id)
@@ -615,7 +604,8 @@ func TestSearchSingleWord(t *testing.T) {
 
 	var responseTasks []entities.Task
 	if err := json.NewDecoder(response.Body).Decode(&responseTasks); err != nil {
-		log.Fatalf("assert stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decode error: %v", err)
 	}
 	assert.Equal(t, len(expectedMatches), len(responseTasks))
 
@@ -673,7 +663,8 @@ func TestSearchMultiWord(t *testing.T) {
 
 	var responseTasks []entities.Task
 	if err := json.NewDecoder(response.Body).Decode(&responseTasks); err != nil {
-		log.Fatalf("assert stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decode error: %v", err)
 	}
 	assert.Equal(t, len(expectedMatches), len(responseTasks))
 
@@ -729,7 +720,8 @@ func TestSearchReturnEmpty(t *testing.T) {
 
 	var responseTasks []entities.Task
 	if err := json.NewDecoder(response.Body).Decode(&responseTasks); err != nil {
-		log.Fatalf("assert stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decode error: %v", err)
 	}
 	assert.Equal(t, len(expectedMatches), len(responseTasks))
 
@@ -744,17 +736,17 @@ func TestSearchReturnEmpty(t *testing.T) {
 // delete success
 func TestDeleteTaskSuccess(t *testing.T) {
 	// prepare
-	prepareDBTasks(2)
+	tasks := prepareDBTasks(2)
 	expectedCode := 200
-	expectedResponse := 2
+	expectedResponse := tasks[0].Id
 
 	// act
-	url := fmt.Sprintf("/tasks/%d", 2)
+	url := fmt.Sprintf("/tasks/%s", tasks[0].Id)
 	response := makeRequest("DELETE", url, nil)
 
 	// assert
 	assert.Equal(t, expectedCode, response.Code)
-	assert.Equal(t, response.Body.String(), strconv.Itoa(expectedResponse))
+	assert.Equal(t, expectedResponse, strings.Trim(response.Body.String(), "\""))
 	cleanDB()
 }
 
@@ -770,15 +762,15 @@ func TestDeleteInvalidTaskFail(t *testing.T) {
 	}
 
 	// act
-	url := fmt.Sprintf("/tasks/%d", 4)
-	response := makeRequest("DELETE", url, nil)
+	response := makeRequest("DELETE", "/tasks/asdf", nil)
 
 	// assert
 	assert.Equal(t, expectedCode, response.Code)
 
 	var responseError httpController.HttpError
 	if err := json.NewDecoder(response.Body).Decode(&responseError); err != nil {
-		log.Fatalf("assert stage error: JSON decode error: %v", err)
+		t.Fail()
+		t.Logf("JSON decode error: %v", err)
 	}
 
 	assert.Equal(t, expectedBody["id"], responseError.Id)

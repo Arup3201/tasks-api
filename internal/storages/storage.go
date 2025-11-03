@@ -25,7 +25,7 @@ func New(dbType string) (TaskRepository, error) {
 		}
 
 		_, err = db.Exec(`CREATE TABLE IF NOT EXISTS tasks(
-								id INT PRIMARY KEY,
+								id VARCHAR(256) PRIMARY KEY,
 								title TEXT NOT NULL, 
 								description TEXT NOT NULL, 
 								is_completed BOOLEAN NOT NULL, 
