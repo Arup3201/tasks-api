@@ -12,22 +12,22 @@ Create networks that can be used for the communication:
 
 ```shell
 docker create network postgres-net
-docker create network tasks-net
+docker create network keycloak-net
 ```
 
-`postgres-net` will be used to communicate between keycloak and postgres. Keycloak will store the data inside the postgres database. `tasks-net` will be used communicate between the API and keycloak and postgres.
+`postgres-net` is the network to connect with the database. `keycloak-net` is the network to connect with keycloak server.
 
 Following docker run will run a PostgreSQL server with the database `tests` that you will use for the API. 
 
 > You can change the database name if you want but make sure to change to other places where it is used as well.
 
-```shell
-docker -d `
---network postgres-net --network-alias=postgres `
---volume psql-data:/var/lib/postgresql `
--e POSTGRES_PASSWORD=1234 `
--e POSTGRES_USERNAME=postgres `
--e POSTGRES_DB=tests `
+```sh
+docker run -d \
+--network postgres-net \
+--volume psql-data:/var/lib/postgresql \
+-e POSTGRES_PASSWORD=1234 \
+-e POSTGRES_USERNAME=postgres \
+-e POSTGRES_DB=tests \
 postgres:18-alpine
 ```
 
@@ -35,17 +35,17 @@ postgres:18-alpine
 
 Next you need to start the keycloak service and attach it to PostgreSQL. You can do that with the following docker run command:
 
-```shell
-docker run `
--p 127.0.0.1:8080:8080 `
---network postgres-net `
---network tasks-net --network-alias=keycloak`
--e KEYCLOAK_ADMIN=admin `
--e KEYCLOAK_ADMIN_PASSWORD=admin `
--e KC_DB=postgres `
--e KC_DB_URL=jdbc:postgresql://postgres/tests `
--e KC_DB_USERNAME=postgres `
--e KC_DB_PASSWORD=1234 `
+```sh
+docker run \
+-p 127.0.0.1:8080:8080 \
+--network postgres-net --network-alias=postgres \
+--network keycloak-net \
+-e KEYCLOAK_ADMIN=admin \
+-e KEYCLOAK_ADMIN_PASSWORD=admin \
+-e KC_DB=postgres \
+-e KC_DB_URL=jdbc:postgresql://postgres/tests \
+-e KC_DB_USERNAME=postgres \
+-e KC_DB_PASSWORD=1234 \
 quay.io/keycloak/keycloak:26.4.0 start-dev
 ```
 
@@ -57,14 +57,14 @@ If you are confused on how to do it, then you can refer this [gist](https://gist
 
 Next, build the image of the API using docker:
 
-```shell
+```sh
 docker build . -t tasks-api
 ```
 
 And then, run the API by providing the environment variables inside a `.env` file like the following:
 
-```shell
-docker run -p 127.0.0.1:8086:8086 --network tasks-net --network postgres-net --env-file .env arupjana/tasks-api /tasks-api
+```sh
+docker run -p 127.0.0.1:8086:8086 --network keycloak-net --network-alias=keycloak --network postgres-net --network-alias=postgres --env-file .env arupjana/tasks-api /tasks-api
 ```
 
 The `.env` file should contain the following values:
@@ -85,6 +85,7 @@ For testing purpose, you can add an user to using keycloak and then try the `/lo
 
 It will start the server at port `8086`, and then you can perform any of the following requests:
 
+- `POST /login`: Login with Keycloak user credentials
 - `GET /tasks`: Get list of tasks
 - `GET /tasks/:id`: Get a task with ID `id`
 - `POST /tasks`: Create a new task
