@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -26,6 +27,34 @@ func Authenticate(secureEndpoints []string) gin.HandlerFunc {
 						return
 					}
 					if token != nil {
+						request, err := http.NewRequest("POST", fmt.Sprintf("%s/realms/%s/protocol/openid-connect/userinfo", utils.Config.KeycloakServerUrl, utils.Config.KeycloakRealName), nil)
+						if err != nil {
+							log.Fatalf("http new request error: %v", err)
+						}
+						request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+						client := &http.Client{}
+						response, err := client.Do(request)
+						if err != nil {
+							log.Fatalf("http client do error: %v", err)
+						}
+						defer response.Body.Close()
+
+						if response.StatusCode != http.StatusOK {
+							log.Printf("login error: keycloak userInfo response error: got response with status %d", response.StatusCode)
+							c.Error(httperrors.InternalServerError(fmt.Errorf("failed to fetch userInfo from Auth server")))
+							return
+						}
+
+						var userInfo struct {
+							UserId string `json:"sub"`
+						}
+						if err = json.NewDecoder(response.Body).Decode(&userInfo); err != nil {
+							log.Printf("login error: keycloak userInfo response encoding error: %v", err)
+							c.Error(httperrors.InternalServerError(fmt.Errorf("failed to decode userInfo from Auth server")))
+							return
+						}
+						log.Println(userInfo.UserId)
+						c.Set("userId", userInfo.UserId)
 						c.Next()
 					} else {
 						log.Printf("authentication error: invalid token")

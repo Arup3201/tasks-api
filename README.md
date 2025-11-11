@@ -17,7 +17,7 @@ docker create network keycloak-net
 
 `postgres-net` is the network to connect with the database. `keycloak-net` is the network to connect with keycloak server.
 
-Following docker run will run a PostgreSQL server with the database `tests` that you will use for the API. 
+Following docker run will run a PostgreSQL server with the database `tests` that you will use for the API.
 
 > You can change the database name if you want but make sure to change to other places where it is used as well.
 
@@ -40,8 +40,8 @@ docker run \
 -p 127.0.0.1:8080:8080 \
 --network postgres-net --network-alias=postgres \
 --network keycloak-net \
--e KEYCLOAK_ADMIN=admin \
--e KEYCLOAK_ADMIN_PASSWORD=admin \
+-e KC_BOOTSTRAP_USERNAME=admin \
+-e KC_BOOTSTRAP_PASSWORD=admin \
 -e KC_DB=postgres \
 -e KC_DB_URL=jdbc:postgresql://postgres/tests \
 -e KC_DB_USERNAME=postgres \
