@@ -24,6 +24,7 @@ Following docker run will run a PostgreSQL server with the database `tests` that
 ```sh
 docker run -d \
 --network postgres-net \
+--network-alias=postgres \
 --volume psql-data:/var/lib/postgresql \
 -e POSTGRES_PASSWORD=1234 \
 -e POSTGRES_USERNAME=postgres \
@@ -38,10 +39,10 @@ Next you need to start the keycloak service and attach it to PostgreSQL. You can
 ```sh
 docker run \
 -p 127.0.0.1:8080:8080 \
---network postgres-net --network-alias=postgres \
---network keycloak-net \
--e KC_BOOTSTRAP_USERNAME=admin \
--e KC_BOOTSTRAP_PASSWORD=admin \
+--network postgres-net \
+--network keycloak-net --network-alias=keycloak \
+-e KC_BOOTSTRAP_ADMIN_USERNAME=admin \
+-e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
 -e KC_DB=postgres \
 -e KC_DB_URL=jdbc:postgresql://postgres/tests \
 -e KC_DB_USERNAME=postgres \
@@ -64,7 +65,7 @@ docker build . -t tasks-api
 And then, run the API by providing the environment variables inside a `.env` file like the following:
 
 ```sh
-docker run -p 127.0.0.1:8086:8086 --network keycloak-net --network-alias=keycloak --network postgres-net --network-alias=postgres --env-file .env arupjana/tasks-api /tasks-api
+docker run -p 127.0.0.1:8086:8086 --network keycloak-net --network postgres-net --env-file .env tasks-api /tasks-api
 ```
 
 The `.env` file should contain the following values:
