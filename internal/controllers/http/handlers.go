@@ -47,6 +47,7 @@ func (handler *routeHandler) Login(c *gin.Context) {
 	formValues.Set("client_secret", utils.Config.KeycloakClientSecret)
 	formValues.Set("username", credential.Username)
 	formValues.Set("password", credential.Password)
+	formValues.Set("scope", "openid")
 
 	request, err := http.NewRequest("POST", fmt.Sprintf("%s/realms/%s/protocol/openid-connect/token", utils.Config.KeycloakServerUrl, utils.Config.KeycloakRealName), strings.NewReader(formValues.Encode()))
 	if err != nil {
@@ -76,10 +77,7 @@ func (handler *routeHandler) Login(c *gin.Context) {
 		return
 	}
 
-	c.Header("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Login success",
-	})
+	c.JSON(http.StatusOK, token)
 }
 
 func (handler *routeHandler) GetTasks(c *gin.Context) {
