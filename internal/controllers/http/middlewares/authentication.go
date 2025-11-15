@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -25,13 +26,37 @@ func Authenticate(secureEndpoints []string) gin.HandlerFunc {
 						abortAuthentication(c)
 						return
 					}
-					if token != nil {
-						c.Next()
-					} else {
-						log.Printf("authentication error: invalid token")
-						abortAuthentication(c)
+
+					request, err := http.NewRequest("GET", fmt.Sprintf("%s/realms/%s/protocol/openid-connect/userinfo", utils.Config.KeycloakServerUrl, utils.Config.KeycloakRealName), nil)
+					if err != nil {
+						log.Fatalf("http new request error: %v", err)
 					}
-					return
+					request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+					client := &http.Client{}
+					response, err := client.Do(request)
+					if err != nil {
+						log.Fatalf("http client do error: %v", err)
+					}
+					defer response.Body.Close()
+
+					if response.StatusCode != http.StatusOK {
+						log.Printf("login error: keycloak userInfo response error: got response with status %d", response.StatusCode)
+						c.Error(httperrors.InternalServerError(fmt.Errorf("failed to fetch userInfo from Auth server")))
+						return
+					}
+
+					var userInfo struct {
+						UserId   string `json:"sub"`
+						Username string `json:"preferred_username"`
+					}
+					if err = json.NewDecoder(response.Body).Decode(&userInfo); err != nil {
+						log.Printf("login error: keycloak userInfo response encoding error: %v", err)
+						c.Error(httperrors.InternalServerError(fmt.Errorf("failed to decode userInfo from Auth server")))
+						return
+					}
+
+					c.Set("username", userInfo.Username)
+					c.Next()
 				}
 			}
 		}
@@ -46,20 +71,26 @@ func abortAuthentication(c *gin.Context) {
 	c.Abort()
 }
 
-func verifyToken(request *http.Request) (jwt.Token, error) {
+func verifyToken(request *http.Request) (string, error) {
 	strToken, err := getAuthHeader(request)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
+
 	jwksKeySet, err := jwk.Fetch(request.Context(), fmt.Sprintf("%s/realms/%s/protocol/openid-connect/certs", utils.Config.KeycloakServerUrl, utils.Config.KeycloakRealName))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
+
 	token, err := jwt.Parse([]byte(strToken), jwt.WithKeySet(jwksKeySet), jwt.WithValidate(true))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return token, nil
+
+	if token == nil {
+		return "", fmt.Errorf("parsed token is null")
+	}
+	return strToken, nil
 }
 
 func getAuthHeader(request *http.Request) (string, error) {
