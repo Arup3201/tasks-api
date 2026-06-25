@@ -211,14 +211,14 @@ func TestExchangeUserIDWithCredentials(t *testing.T) {
 			}
 
 			svc := models.NewUserService(store)
-			gotID, err := svc.ExchangeUserIDWithCredentials(ctx, tc.email, tc.password)
+			user, err := svc.ExchangeUserWithCredentials(ctx, tc.email, tc.password)
 
 			if tc.wantErr != nil {
 				assert.ErrorIs(t, err, tc.wantErr)
-				assert.Empty(t, gotID)
+				assert.Nil(t, user)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tc.wantID, gotID)
+				assert.Equal(t, tc.wantID, user.ID)
 			}
 
 			store.AssertExpectations(t)

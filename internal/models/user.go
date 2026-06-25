@@ -88,17 +88,17 @@ func (us *UserService) CreateUser(ctx context.Context,
 	return user, nil
 }
 
-func (us *UserService) ExchangeUserIDWithCredentials(ctx context.Context,
-	email, password string) (string, error) {
+func (us *UserService) ExchangeUserWithCredentials(ctx context.Context,
+	email, password string) (*User, error) {
 
 	user, err := us.store.GetByEmail(ctx, email)
 	if err != nil {
-		return "", ErrInvalidCredentials
+		return nil, ErrInvalidCredentials
 	}
 
 	if err := bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(password)); err != nil {
-		return "", ErrInvalidCredentials
+		return nil, ErrInvalidCredentials
 	}
 
-	return user.ID, nil
+	return user, nil
 }
