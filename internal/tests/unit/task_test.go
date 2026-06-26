@@ -53,7 +53,7 @@ func TestCreateTask(t *testing.T) {
 					Return(nil)
 				store.
 					On("Get", mock.Anything, mock.AnythingOfType("string"), "user-1").
-					Return(&models.Task{
+					Return(&models.TaskModel{
 						ID:          "generated-id",
 						UserID:      "user-1",
 						Title:       "Write tests",
@@ -92,7 +92,7 @@ func TestCreateTask(t *testing.T) {
 					Return(nil)
 				store.
 					On("Get", mock.Anything, mock.AnythingOfType("string"), "user-1").
-					Return(&models.Task{ID: "generated-id", UserID: "user-1", Title: "  Write tests  ", Description: "  Add unit tests  "}, nil)
+					Return(&models.TaskModel{ID: "generated-id", UserID: "user-1", Title: "  Write tests  ", Description: "  Add unit tests  "}, nil)
 			},
 			wantCreate: true,
 			wantGet:    true,
@@ -121,7 +121,7 @@ func TestCreateTask(t *testing.T) {
 					Return(nil)
 				store.
 					On("Get", mock.Anything, mock.AnythingOfType("string"), "user-1").
-					Return((*models.Task)(nil), errors.New("get failed"))
+					Return((*models.TaskModel)(nil), errors.New("get failed"))
 			},
 			wantErrContains: "get failed",
 			wantCreate:      true,

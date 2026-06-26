@@ -62,7 +62,7 @@ func TestCreateUser(t *testing.T) {
 					Return(nil)
 				store.
 					On("Get", mock.Anything, mock.AnythingOfType("string")).
-					Return(&models.User{
+					Return(&models.UserModel{
 						Email:     "test@example.com",
 						Name:      "Test User",
 						ID:        "generated-id",
@@ -169,7 +169,7 @@ func TestExchangeUserIDWithCredentials(t *testing.T) {
 			setupMock: func(store *mockUserStore) {
 				store.
 					On("GetByEmail", mock.Anything, "test@example.com").
-					Return(&models.User{
+					Return(&models.UserModel{
 						ID:           "user-1",
 						PasswordHash: hashed,
 					}, nil)
@@ -183,7 +183,7 @@ func TestExchangeUserIDWithCredentials(t *testing.T) {
 			setupMock: func(store *mockUserStore) {
 				store.
 					On("GetByEmail", mock.Anything, "test@example.com").
-					Return(&models.User{
+					Return(&models.UserModel{
 						ID:           "user-1",
 						PasswordHash: hashed,
 					}, nil)
@@ -197,7 +197,7 @@ func TestExchangeUserIDWithCredentials(t *testing.T) {
 			setupMock: func(store *mockUserStore) {
 				store.
 					On("GetByEmail", mock.Anything, "test@example.com").
-					Return((*models.User)(nil), errors.New("db failure"))
+					Return((*models.UserModel)(nil), errors.New("db failure"))
 			},
 			wantErr: models.ErrInvalidCredentials,
 		},
