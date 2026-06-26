@@ -9,12 +9,13 @@ import (
 	"testing"
 	"time"
 
-	controller "github.com/Arup3201/gotasks/internal/controllers"
+	"github.com/Arup3201/gotasks/internal/controllers"
 	"github.com/Arup3201/gotasks/internal/models"
 	"github.com/Arup3201/gotasks/internal/testutils"
 	"github.com/Arup3201/gotasks/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -36,42 +37,38 @@ type loginResponse struct {
 	} `json:"user"`
 }
 
-type authTestEnv struct {
-	controller *controller.AuthController
+type AuthTestSuite struct {
+	suite.Suite
+	controller *controllers.AuthController
 	userSvc    *models.UserService
 	jwtSvc     *utils.JWTService
 }
 
-func setupAuthTestEnv(t *testing.T) *authTestEnv {
-	t.Helper()
+func TestAuthSuite(t *testing.T) {
+	suite.Run(t, new(AuthTestSuite))
+}
+
+func (s *AuthTestSuite) SetupSuite() {
 
 	ctx := context.Background()
 	pg, err := testutils.CreatePostgresContainer(ctx)
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		err := pg.Terminate(ctx)
-		require.NoError(t, err)
+	s.Require().NoError(err)
+	s.T().Cleanup(func() {
+		s.Require().NoError(pg.Terminate(ctx), "could not terminate postgres container")
 	})
 
 	db, err := gorm.Open(postgres.Open(pg.ConnectionString), &gorm.Config{})
-	require.NoError(t, err)
+	s.Require().NoError(err)
 
-	err = db.AutoMigrate(&models.User{})
-	require.NoError(t, err)
+	s.Require().NoError(db.AutoMigrate(&models.User{}))
 
-	userSvc := models.NewUserService(models.NewUserStore(db))
-	jwtSvc := utils.NewJWTService("test-secret", "test-issuer")
+	s.userSvc = models.NewUserService(models.NewUserStore(db))
+	s.jwtSvc = utils.NewJWTService("test-secret", "test-issuer")
 
-	return &authTestEnv{
-		controller: controller.NewAuthController(userSvc, jwtSvc),
-		userSvc:    userSvc,
-		jwtSvc:     jwtSvc,
-	}
+	s.controller = controllers.NewAuthController(s.userSvc, s.jwtSvc)
 }
 
-func TestRegisterEndpoint(t *testing.T) {
-	env := setupAuthTestEnv(t)
-
+func (s *AuthTestSuite) TestRegisterEndpoint() {
 	cases := []struct {
 		name       string
 		body       string
@@ -108,11 +105,11 @@ func TestRegisterEndpoint(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+		s.T().Run(tc.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/register", bytes.NewBufferString(tc.body))
 			rec := httptest.NewRecorder()
 
-			env.controller.Register(rec, req)
+			s.controller.Register(rec, req)
 
 			assert.Equal(t, tc.wantStatus, rec.Code)
 
@@ -131,12 +128,10 @@ func TestRegisterEndpoint(t *testing.T) {
 	}
 }
 
-func TestLoginEndpoint(t *testing.T) {
-	env := setupAuthTestEnv(t)
-
+func (s *AuthTestSuite) TestLoginEndpoint() {
 	// Prepare a registered user for login tests.
-	user, err := env.userSvc.CreateUser(context.Background(), "bob@example.com", "Bob Example", "secret123")
-	require.NoError(t, err)
+	user, err := s.userSvc.CreateUser(context.Background(), "bob@example.com", "Bob Example", "secret123")
+	require.NoError(s.T(), err)
 
 	cases := []struct {
 		name            string
@@ -177,11 +172,11 @@ func TestLoginEndpoint(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+		s.T().Run(tc.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewBufferString(tc.body))
 			rec := httptest.NewRecorder()
 
-			env.controller.Login(rec, req)
+			s.controller.Login(rec, req)
 
 			assert.Equal(t, tc.wantStatus, rec.Code)
 
@@ -199,7 +194,7 @@ func TestLoginEndpoint(t *testing.T) {
 			assert.WithinDuration(t, time.Now().Add(utils.TOKEN_EXPIRES_IN), resp.ExpiresAt, time.Minute)
 
 			if tc.expectJWTClaims {
-				claims, err := env.jwtSvc.ValidateToken(resp.AccessToken)
+				claims, err := s.jwtSvc.ValidateToken(resp.AccessToken)
 				require.NoError(t, err)
 				assert.Equal(t, tc.wantUserID, claims.UserID)
 				assert.Equal(t, tc.wantUserEmail, claims.Email)
