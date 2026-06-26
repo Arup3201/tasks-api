@@ -31,7 +31,7 @@ func TestUserRegistrationAndLoginWorkflow(t *testing.T) {
 		t.Fatalf("failed to open gorm db: %v", err)
 	}
 
-	if err := db.AutoMigrate(&models.DBUser{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}); err != nil {
 		t.Fatalf("failed to migrate user schema: %v", err)
 	}
 

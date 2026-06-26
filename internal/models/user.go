@@ -30,7 +30,7 @@ var (
 	ErrInvalidCredentials = errors.New("invalid login credentials")
 )
 
-type User struct {
+type UserModel struct {
 	ID, Name, Email      string
 	PasswordHash         []byte
 	CreatedAt, UpdatedAt time.Time
@@ -41,9 +41,9 @@ type UserStoreInterface interface {
 		id, name, email string,
 		passwordHash []byte) error
 	Get(ctx context.Context,
-		id string) (*User, error)
+		id string) (*UserModel, error)
 	GetByEmail(ctx context.Context,
-		email string) (*User, error)
+		email string) (*UserModel, error)
 }
 
 type UserService struct {
@@ -55,7 +55,7 @@ func NewUserService(store UserStoreInterface) *UserService {
 }
 
 func (us *UserService) CreateUser(ctx context.Context,
-	email, name, password string) (*User, error) {
+	email, name, password string) (*UserModel, error) {
 	var err error
 
 	if match := emailRegex.Find([]byte(email)); match == nil {
@@ -78,7 +78,7 @@ func (us *UserService) CreateUser(ctx context.Context,
 		return nil, fmt.Errorf("store create: %w", err)
 	}
 
-	var user *User
+	var user *UserModel
 	user, err = us.store.Get(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("store get: %w", err)
@@ -88,7 +88,7 @@ func (us *UserService) CreateUser(ctx context.Context,
 }
 
 func (us *UserService) ExchangeUserWithCredentials(ctx context.Context,
-	email, password string) (*User, error) {
+	email, password string) (*UserModel, error) {
 
 	user, err := us.store.GetByEmail(ctx, email)
 	if err != nil {

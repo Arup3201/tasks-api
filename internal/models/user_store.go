@@ -7,12 +7,14 @@ import (
 	"gorm.io/gorm"
 )
 
-type DBUser struct {
+type User struct {
 	ID                   string `gorm:"primaryKey"`
 	Name                 string
 	Email                string `gorm:"unique"`
 	PasswordHash         []byte
 	CreatedAt, UpdatedAt time.Time
+
+	Tasks []Task `gorm:"constraint:OnDelete:CASCADE"`
 }
 
 type UserStore struct {
@@ -27,14 +29,14 @@ func (us *UserStore) Create(ctx context.Context,
 	id, name, email string,
 	passwordHash []byte) error {
 
-	user := DBUser{
+	user := User{
 		ID:           id,
 		Name:         name,
 		Email:        email,
 		PasswordHash: passwordHash,
 	}
 
-	err := gorm.G[DBUser](us.db).Create(ctx, &user)
+	err := gorm.G[User](us.db).Create(ctx, &user)
 	if err != nil {
 		return err
 	}
@@ -43,14 +45,14 @@ func (us *UserStore) Create(ctx context.Context,
 }
 
 func (us *UserStore) Get(ctx context.Context,
-	id string) (*User, error) {
+	id string) (*UserModel, error) {
 
-	userRow, err := gorm.G[DBUser](us.db).Where("id = ?", id).First(ctx)
+	userRow, err := gorm.G[User](us.db).Where("id = ?", id).First(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return &User{
+	return &UserModel{
 		ID:           userRow.ID,
 		Name:         userRow.Name,
 		Email:        userRow.Email,
@@ -61,14 +63,14 @@ func (us *UserStore) Get(ctx context.Context,
 }
 
 func (us *UserStore) GetByEmail(ctx context.Context,
-	email string) (*User, error) {
+	email string) (*UserModel, error) {
 
-	userRow, err := gorm.G[DBUser](us.db).Where("email = ?", email).First(ctx)
+	userRow, err := gorm.G[User](us.db).Where("email = ?", email).First(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return &User{
+	return &UserModel{
 		ID:           userRow.ID,
 		Name:         userRow.Name,
 		Email:        userRow.Email,

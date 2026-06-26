@@ -56,7 +56,7 @@ func setupAuthTestEnv(t *testing.T) *authTestEnv {
 	db, err := gorm.Open(postgres.Open(pg.ConnectionString), &gorm.Config{})
 	require.NoError(t, err)
 
-	err = db.AutoMigrate(&models.DBUser{})
+	err = db.AutoMigrate(&models.User{})
 	require.NoError(t, err)
 
 	userSvc := models.NewUserService(models.NewUserStore(db))
