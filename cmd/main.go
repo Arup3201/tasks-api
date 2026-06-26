@@ -1,0 +1,86 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
+	"github.com/Arup3201/gotasks/internal/controllers"
+	"github.com/Arup3201/gotasks/internal/middlewares"
+	"github.com/Arup3201/gotasks/internal/models"
+	"github.com/Arup3201/gotasks/internal/utils"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+)
+
+func getEnv(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Fatalf("%s is missing", key)
+	}
+
+	return value
+}
+
+func PostgresDSN() string {
+	host := getEnv("DBHOST")
+	port := getEnv("DBPORT")
+	user := getEnv("DBUSER")
+	password := getEnv("DBPASS")
+	db := getEnv("DBNAME")
+
+	return fmt.Sprintf("host=%s port=%s user=%s "+
+		"password=%s dbname=%s sslmode=disable", host, port,
+		user, password, db)
+}
+
+func main() {
+	dsn := PostgresDSN()
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	secretKey := getEnv("JWT_SECRET")
+	issuer := getEnv("JWT_ISSUER")
+
+	userStore := models.NewUserStore(db)
+	taskStore := models.NewTaskStore(db)
+
+	userService := models.NewUserService(userStore)
+	jwtService := utils.NewJWTService(secretKey, issuer)
+	taskService := models.NewTaskService(taskStore)
+
+	authController := controllers.NewAuthController(userService, jwtService)
+	taskController := controllers.NewTaskController(taskService)
+	authMiddleware := middlewares.NewAuthMiddleware(jwtService)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /register", authController.Register)
+	mux.HandleFunc("POST /login", authController.Login)
+	mux.Handle("POST /tasks",
+		authMiddleware.
+			Required(http.
+				HandlerFunc(taskController.CreateTask),
+			),
+	)
+
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]string{
+			"status": "healthy",
+		})
+	})
+
+	serverHost := getEnv("HOST")
+	serverPort := getEnv("PORT")
+	server := http.Server{
+		Addr:         fmt.Sprintf("%s:%s", serverHost, serverPort),
+		Handler:      mux,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 20 * time.Second,
+	}
+	log.Fatal(server.ListenAndServe())
+}
