@@ -11,7 +11,6 @@ type DBUser struct {
 	ID                   string `gorm:"primaryKey"`
 	Name                 string
 	Email                string `gorm:"unique"`
-	IsCompleted          bool
 	PasswordHash         []byte
 	CreatedAt, UpdatedAt time.Time
 }
@@ -55,7 +54,6 @@ func (us *UserStore) Get(ctx context.Context,
 		ID:           userRow.ID,
 		Name:         userRow.Name,
 		Email:        userRow.Email,
-		IsCompleted:  userRow.IsCompleted,
 		PasswordHash: userRow.PasswordHash,
 		CreatedAt:    userRow.CreatedAt,
 		UpdatedAt:    userRow.UpdatedAt,
@@ -74,7 +72,6 @@ func (us *UserStore) GetByEmail(ctx context.Context,
 		ID:           userRow.ID,
 		Name:         userRow.Name,
 		Email:        userRow.Email,
-		IsCompleted:  userRow.IsCompleted,
 		PasswordHash: userRow.PasswordHash,
 		CreatedAt:    userRow.CreatedAt,
 		UpdatedAt:    userRow.UpdatedAt,

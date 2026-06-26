@@ -32,7 +32,6 @@ var (
 
 type User struct {
 	ID, Name, Email      string
-	IsCompleted          bool
 	PasswordHash         []byte
 	CreatedAt, UpdatedAt time.Time
 }
