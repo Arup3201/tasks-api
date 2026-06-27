@@ -44,6 +44,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	db.AutoMigrate(&models.User{}, &models.Task{})
+
 	secretKey := getEnv("JWT_SECRET")
 	issuer := getEnv("JWT_ISSUER")
 
