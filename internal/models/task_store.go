@@ -82,3 +82,21 @@ func (ts *TaskStore) List(ctx context.Context,
 
 	return tasks, nil
 }
+
+func (ts *TaskStore) Delete(ctx context.Context,
+	id, userID string) error {
+
+	affected, err := gorm.
+		G[Task](ts.db).
+		Where("id = ? AND user_id = ?", id, userID).
+		Delete(ctx)
+	if err != nil {
+		return err
+	}
+
+	if affected == 0 {
+		return ErrTaskNotFound
+	}
+
+	return nil
+}

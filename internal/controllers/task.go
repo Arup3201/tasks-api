@@ -183,3 +183,39 @@ func (tc *TaskController) ListTasks(w http.ResponseWriter, r *http.Request) {
 		Tasks: listedTasks,
 	})
 }
+
+func (tc *TaskController) DeleteTask(w http.ResponseWriter, r *http.Request) {
+
+	id := r.PathValue("id")
+	if id == "" {
+		http.Error(w,
+			"empty task ID",
+			http.StatusBadRequest)
+		return
+	}
+
+	userID, err := getUserID(r)
+	if err != nil {
+		http.Error(w,
+			"not authenticated",
+			http.StatusUnauthorized)
+		return
+	}
+
+	err = tc.taskService.DeleteTask(r.Context(), id, userID)
+	switch {
+	case errors.Is(err, models.ErrTaskNotFound):
+		http.Error(w,
+			"task not found",
+			http.StatusNotFound)
+	case err != nil:
+		http.Error(w,
+			"server error",
+			http.StatusInternalServerError)
+	}
+	if err != nil {
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

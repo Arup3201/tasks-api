@@ -97,6 +97,10 @@ func (e *errorTaskStore) List(ctx context.Context, userID string) ([]models.Task
 	return nil, errors.New("store failure")
 }
 
+func (e *errorTaskStore) Delete(ctx context.Context, id, userID string) error {
+	return errors.New("store failure")
+}
+
 func (s *CreateTaskTestSuite) TestCreateTaskEndpoint() {
 	cases := []struct {
 		name         string
@@ -306,6 +310,89 @@ func (s *CreateTaskTestSuite) TestUpdateTaskEndpoint() {
 				assert.Equal(s.T(), *tc.wantComplete, resp.Task.IsCompleted)
 			}
 			assert.NotEmpty(s.T(), resp.Task.ID)
+		})
+	}
+}
+
+func (s *CreateTaskTestSuite) TestDeleteTaskEndpoint() {
+	cases := []struct {
+		name         string
+		withAuth     bool
+		useFaultySvc bool
+		createTask   bool
+		taskID       string
+		wantStatus   int
+		wantError    string
+		wantCount    int
+	}{
+		{
+			name:       "success",
+			withAuth:   true,
+			createTask: true,
+			wantStatus: http.StatusNoContent,
+			wantCount:  0,
+		},
+		{
+			name:       "missing auth",
+			withAuth:   false,
+			createTask: true,
+			wantStatus: http.StatusUnauthorized,
+			wantError:  "not authenticated",
+		},
+		{
+			name:       "task not found",
+			withAuth:   true,
+			taskID:     "missing-task-id",
+			wantStatus: http.StatusNotFound,
+			wantError:  "task not found",
+		},
+		{
+			name:         "server error",
+			withAuth:     true,
+			createTask:   true,
+			useFaultySvc: true,
+			wantStatus:   http.StatusInternalServerError,
+			wantError:    "server error",
+		},
+	}
+
+	for _, tc := range cases {
+		s.Run(tc.name, func() {
+			var taskID string
+			if tc.createTask {
+				createdTask, err := s.taskSvc.CreateTask(context.Background(), s.userID, "Task to delete", "Delete me")
+				s.Require().NoError(err)
+				taskID = createdTask.ID
+			} else if tc.taskID != "" {
+				taskID = tc.taskID
+			}
+
+			req := httptest.NewRequest(http.MethodDelete, "/tasks/"+taskID, nil)
+			if tc.withAuth {
+				req = req.WithContext(context.WithValue(req.Context(), "user_id", s.userID))
+			}
+
+			rec := httptest.NewRecorder()
+
+			controller := s.controller
+			if tc.useFaultySvc {
+				controller = controllers.NewTaskController(models.NewTaskService(&errorTaskStore{}))
+			}
+
+			mux := http.NewServeMux()
+			mux.HandleFunc("DELETE /tasks/{id}", controller.DeleteTask)
+			mux.ServeHTTP(rec, req)
+
+			assert.Equal(s.T(), tc.wantStatus, rec.Code)
+
+			if tc.wantError != "" {
+				assert.Contains(s.T(), rec.Body.String(), tc.wantError)
+				return
+			}
+
+			var count int64
+			s.Require().NoError(s.db.Model(&models.Task{}).Count(&count).Error)
+			assert.Equal(s.T(), int64(tc.wantCount), count)
 		})
 	}
 }

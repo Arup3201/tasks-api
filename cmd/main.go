@@ -82,6 +82,10 @@ func main() {
 			patter: "GET /tasks",
 			fn:     taskController.ListTasks,
 		},
+		{
+			patter: "DELETE /tasks/{id}",
+			fn:     taskController.DeleteTask,
+		},
 	}
 
 	for _, ep := range taskEndpoints {

@@ -41,6 +41,11 @@ func (m *mockTaskStore) List(ctx context.Context, userID string) ([]models.Task,
 	return args.Get(0).([]models.Task), args.Error(1)
 }
 
+func (m *mockTaskStore) Delete(ctx context.Context, id, userID string) error {
+	args := m.Called(ctx, id, userID)
+	return args.Error(0)
+}
+
 func TestCreateTask(t *testing.T) {
 	ctx := context.Background()
 

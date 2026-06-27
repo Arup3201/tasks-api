@@ -29,6 +29,8 @@ type TaskStoreInterface interface {
 		task *Task) error
 	List(ctx context.Context,
 		userID string) ([]Task, error)
+	Delete(ctx context.Context,
+		id, userID string) error
 }
 
 type TaskService struct {
@@ -144,4 +146,15 @@ func (ts *TaskService) ListTasks(ctx context.Context,
 	}
 
 	return tasks, nil
+}
+
+func (ts *TaskService) DeleteTask(ctx context.Context,
+	id, userID string) error {
+
+	err := ts.store.Delete(ctx, id, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
