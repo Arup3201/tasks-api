@@ -222,13 +222,6 @@ func (s *CreateTaskTestSuite) TestUpdateTaskEndpoint() {
 			wantError:  "not authenticated",
 		},
 		{
-			name:       "missing id",
-			body:       `{"title":"Updated title","description":"Updated description"}`,
-			withAuth:   true,
-			wantStatus: http.StatusBadRequest,
-			wantError:  "empty task ID",
-		},
-		{
 			name:       "invalid json",
 			body:       `{"title":"Updated title","description":"Updated description"`,
 			withAuth:   true,
@@ -282,12 +275,7 @@ func (s *CreateTaskTestSuite) TestUpdateTaskEndpoint() {
 				taskID = tc.taskID
 			}
 
-			url := "/tasks"
-			if taskID != "" {
-				url += "?id=" + taskID
-			}
-
-			req := httptest.NewRequest(http.MethodPut, url, bytes.NewBufferString(tc.body))
+			req := httptest.NewRequest(http.MethodPatch, "/tasks/"+taskID, bytes.NewBufferString(tc.body))
 			if tc.withAuth {
 				req = req.WithContext(context.WithValue(req.Context(), "user_id", s.userID))
 			}
@@ -299,7 +287,9 @@ func (s *CreateTaskTestSuite) TestUpdateTaskEndpoint() {
 				controller = controllers.NewTaskController(models.NewTaskService(&errorTaskStore{}))
 			}
 
-			controller.UpdateTask(rec, req)
+			mux := http.NewServeMux()
+			mux.HandleFunc("PATCH /tasks/{id}", controller.UpdateTask)
+			mux.ServeHTTP(rec, req)
 
 			assert.Equal(s.T(), tc.wantStatus, rec.Code)
 

@@ -90,7 +90,7 @@ type UpdateTaskResponse struct {
 }
 
 func (tc *TaskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	id := r.PathValue("id")
 	if id == "" {
 		http.Error(w,
 			"empty task ID",
