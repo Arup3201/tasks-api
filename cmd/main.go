@@ -12,6 +12,7 @@ import (
 	"github.com/Arup3201/gotasks/internal/middlewares"
 	"github.com/Arup3201/gotasks/internal/models"
 	"github.com/Arup3201/gotasks/internal/utils"
+	"github.com/rs/cors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -99,8 +100,11 @@ func main() {
 	serverHost := getEnv("HOST")
 	serverPort := getEnv("PORT")
 	server := http.Server{
-		Addr:         fmt.Sprintf("%s:%s", serverHost, serverPort),
-		Handler:      mux,
+		Addr: fmt.Sprintf("%s:%s", serverHost, serverPort),
+		Handler: cors.New(cors.Options{
+			AllowedMethods: []string{"HEAD", "GET", "OPTION", "PATCH"},
+			AllowedHeaders: []string{"Authorization", "Content-Type"},
+		}).Handler(mux),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 20 * time.Second,
 	}
