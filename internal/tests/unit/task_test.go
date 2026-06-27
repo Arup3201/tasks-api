@@ -33,6 +33,14 @@ func (m *mockTaskStore) Update(ctx context.Context, task *models.Task) error {
 	return args.Error(0)
 }
 
+func (m *mockTaskStore) List(ctx context.Context, userID string) ([]models.Task, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]models.Task), args.Error(1)
+}
+
 func TestCreateTask(t *testing.T) {
 	ctx := context.Background()
 
@@ -353,6 +361,76 @@ func TestUpdateTask(t *testing.T) {
 				tc.wantUpdatedTask(t, *task)
 			}
 
+			store.AssertExpectations(t)
+		})
+	}
+}
+
+func TestListTasks(t *testing.T) {
+	ctx := context.Background()
+
+	cases := []struct {
+		name            string
+		userID          string
+		setupMock       func(store *mockTaskStore)
+		wantErr         error
+		wantErrContains string
+		wantTasks       []models.TaskModel
+	}{
+		{
+			name:   "success returns tasks",
+			userID: "user-1",
+			setupMock: func(store *mockTaskStore) {
+				store.On("List", mock.Anything, "user-1").Return([]models.Task{
+					{ID: "task-1", UserID: "user-1", Title: "Title 1", Description: "Desc 1", IsCompleted: false},
+					{ID: "task-2", UserID: "user-1", Title: "Title 2", Description: "Desc 2", IsCompleted: true},
+				}, nil)
+			},
+			wantTasks: []models.TaskModel{
+				{ID: "task-1", UserID: "user-1", Title: "Title 1", Description: "Desc 1", IsCompleted: false},
+				{ID: "task-2", UserID: "user-1", Title: "Title 2", Description: "Desc 2", IsCompleted: true},
+			},
+		},
+		{
+			name:   "success returns empty list",
+			userID: "user-1",
+			setupMock: func(store *mockTaskStore) {
+				store.On("List", mock.Anything, "user-1").Return([]models.Task{}, nil)
+			},
+			wantTasks: []models.TaskModel{},
+		},
+		{
+			name:   "store list failure",
+			userID: "user-1",
+			setupMock: func(store *mockTaskStore) {
+				store.On("List", mock.Anything, "user-1").Return([]models.Task(nil), errors.New("list failed"))
+			},
+			wantErrContains: "list failed",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &mockTaskStore{}
+			if tc.setupMock != nil {
+				tc.setupMock(store)
+			}
+
+			service := models.NewTaskService(store)
+			tasks, err := service.ListTasks(ctx, tc.userID)
+
+			if tc.wantErr != nil {
+				assert.ErrorIs(t, err, tc.wantErr)
+				assert.Nil(t, tasks)
+			} else if tc.wantErrContains != "" {
+				assert.ErrorContains(t, err, tc.wantErrContains)
+				assert.Nil(t, tasks)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.wantTasks, tasks)
+			}
+
+			store.AssertCalled(t, "List", mock.Anything, tc.userID)
 			store.AssertExpectations(t)
 		})
 	}

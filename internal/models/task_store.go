@@ -71,3 +71,14 @@ func (ts *TaskStore) Update(ctx context.Context,
 
 	return nil
 }
+
+func (ts *TaskStore) List(ctx context.Context,
+	userID string) ([]Task, error) {
+
+	tasks, err := gorm.G[Task](ts.db).Where("user_id = ?", userID).Find(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
+}

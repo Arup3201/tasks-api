@@ -27,6 +27,8 @@ type TaskStoreInterface interface {
 		id, userID string) (*Task, error)
 	Update(ctx context.Context,
 		task *Task) error
+	List(ctx context.Context,
+		userID string) ([]Task, error)
 }
 
 type TaskService struct {
@@ -118,4 +120,28 @@ func (ts *TaskService) UpdateTask(ctx context.Context,
 		CreatedAt:   task.CreatedAt,
 		UpdatedAt:   task.UpdatedAt,
 	}, nil
+}
+
+func (ts *TaskService) ListTasks(ctx context.Context,
+	userID string) ([]TaskModel, error) {
+
+	rows, err := ts.store.List(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	tasks := []TaskModel{}
+	for _, r := range rows {
+		tasks = append(tasks, TaskModel{
+			ID:          r.ID,
+			UserID:      r.UserID,
+			Title:       r.Title,
+			Description: r.Description,
+			IsCompleted: r.IsCompleted,
+			CreatedAt:   r.CreatedAt,
+			UpdatedAt:   r.UpdatedAt,
+		})
+	}
+
+	return tasks, nil
 }

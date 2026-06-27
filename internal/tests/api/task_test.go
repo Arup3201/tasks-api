@@ -19,18 +19,23 @@ import (
 	"gorm.io/gorm"
 )
 
-type createTaskResponse struct {
+type taskResponse struct {
 	ID          string `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	IsCompleted bool   `json:"is_completed"`
 }
 
+type createTaskResponse struct {
+	Task taskResponse `json:"task"`
+}
+
 type updateTaskResponse struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	IsCompleted bool   `json:"is_completed"`
+	Task taskResponse `json:"task"`
+}
+
+type listTasksResponse struct {
+	Tasks []taskResponse `json:"tasks"`
 }
 
 type CreateTaskTestSuite struct {
@@ -86,6 +91,10 @@ func (e *errorTaskStore) Get(ctx context.Context, id, userID string) (*models.Ta
 
 func (e *errorTaskStore) Update(ctx context.Context, task *models.Task) error {
 	return errors.New("store failure")
+}
+
+func (e *errorTaskStore) List(ctx context.Context, userID string) ([]models.Task, error) {
+	return nil, errors.New("store failure")
 }
 
 func (s *CreateTaskTestSuite) TestCreateTaskEndpoint() {
@@ -172,10 +181,10 @@ func (s *CreateTaskTestSuite) TestCreateTaskEndpoint() {
 
 			var resp createTaskResponse
 			require.NoError(s.T(), json.NewDecoder(rec.Body).Decode(&resp))
-			assert.Equal(s.T(), tc.wantTitle, resp.Title)
-			assert.Equal(s.T(), tc.wantDesc, resp.Description)
-			assert.Equal(s.T(), tc.wantComplete, resp.IsCompleted)
-			assert.NotEmpty(s.T(), resp.ID)
+			assert.Equal(s.T(), tc.wantTitle, resp.Task.Title)
+			assert.Equal(s.T(), tc.wantDesc, resp.Task.Description)
+			assert.Equal(s.T(), tc.wantComplete, resp.Task.IsCompleted)
+			assert.NotEmpty(s.T(), resp.Task.ID)
 		})
 	}
 }
@@ -301,12 +310,106 @@ func (s *CreateTaskTestSuite) TestUpdateTaskEndpoint() {
 
 			var resp updateTaskResponse
 			require.NoError(s.T(), json.NewDecoder(rec.Body).Decode(&resp))
-			assert.Equal(s.T(), tc.wantTitle, resp.Title)
-			assert.Equal(s.T(), tc.wantDesc, resp.Description)
+			assert.Equal(s.T(), tc.wantTitle, resp.Task.Title)
+			assert.Equal(s.T(), tc.wantDesc, resp.Task.Description)
 			if tc.wantComplete != nil {
-				assert.Equal(s.T(), *tc.wantComplete, resp.IsCompleted)
+				assert.Equal(s.T(), *tc.wantComplete, resp.Task.IsCompleted)
 			}
-			assert.NotEmpty(s.T(), resp.ID)
+			assert.NotEmpty(s.T(), resp.Task.ID)
+		})
+	}
+}
+
+func (s *CreateTaskTestSuite) TestListTasksEndpoint() {
+	cases := []struct {
+		name         string
+		withAuth     bool
+		useFaultySvc bool
+		createTasks  bool
+		createOther  bool
+		wantStatus   int
+		wantError    string
+		wantCount    int
+		wantTitles   []string
+	}{
+		{
+			name:       "empty list returns success",
+			withAuth:   true,
+			wantStatus: http.StatusOK,
+			wantCount:  0,
+		},
+		{
+			name:        "success returns user tasks",
+			withAuth:    true,
+			createTasks: true,
+			createOther: true,
+			wantStatus:  http.StatusOK,
+			wantCount:   2,
+			wantTitles:  []string{"First task", "Second task"},
+		},
+		{
+			name:       "missing auth",
+			withAuth:   false,
+			wantStatus: http.StatusUnauthorized,
+			wantError:  "not authenticated",
+		},
+		{
+			name:         "server error",
+			withAuth:     true,
+			useFaultySvc: true,
+			wantStatus:   http.StatusInternalServerError,
+			wantError:    "server error",
+		},
+	}
+
+	for _, tc := range cases {
+		s.Run(tc.name, func() {
+			if tc.createTasks {
+				_, err := s.taskSvc.CreateTask(context.Background(), s.userID, "First task", "First description")
+				s.Require().NoError(err)
+				_, err = s.taskSvc.CreateTask(context.Background(), s.userID, "Second task", "Second description")
+				s.Require().NoError(err)
+			}
+
+			if tc.createOther {
+				otherUser, err := s.userSvc.CreateUser(context.Background(), "other-user@example.com", "Other User", "secret123")
+				s.Require().NoError(err)
+				_, err = s.taskSvc.CreateTask(context.Background(), otherUser.ID, "Other task", "Other description")
+				s.Require().NoError(err)
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/tasks", nil)
+			if tc.withAuth {
+				req = req.WithContext(context.WithValue(req.Context(), "user_id", s.userID))
+			}
+
+			rec := httptest.NewRecorder()
+			controller := s.controller
+			if tc.useFaultySvc {
+				controller = controllers.NewTaskController(models.NewTaskService(&errorTaskStore{}))
+			}
+
+			controller.ListTasks(rec, req)
+
+			assert.Equal(s.T(), tc.wantStatus, rec.Code)
+
+			if tc.wantError != "" {
+				assert.Contains(s.T(), rec.Body.String(), tc.wantError)
+				return
+			}
+
+			var resp listTasksResponse
+			require.NoError(s.T(), json.NewDecoder(rec.Body).Decode(&resp))
+			assert.Len(s.T(), resp.Tasks, tc.wantCount)
+			if len(tc.wantTitles) > 0 {
+				titleMap := map[string]bool{}
+				for _, task := range resp.Tasks {
+					titleMap[task.Title] = true
+				}
+				for _, expected := range tc.wantTitles {
+					assert.True(s.T(), titleMap[expected], "expected title %s in response", expected)
+				}
+			}
 		})
 	}
 }

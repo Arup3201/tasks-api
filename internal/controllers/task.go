@@ -9,6 +9,15 @@ import (
 	"github.com/Arup3201/gotasks/internal/models"
 )
 
+type Task struct {
+	ID          string    `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	IsCompleted bool      `json:"is_completed"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
 type TaskController struct {
 	taskService *models.TaskService
 }
@@ -23,12 +32,7 @@ type CreateTaskRequest struct {
 }
 
 type CreateTaskResponse struct {
-	ID          string    `json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	IsCompleted bool      `json:"is_completed"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	Task Task `json:"task"`
 }
 
 func (tc *TaskController) CreateTask(w http.ResponseWriter, r *http.Request) {
@@ -64,12 +68,14 @@ func (tc *TaskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(CreateTaskResponse{
-		ID:          task.ID,
-		Title:       task.Title,
-		Description: task.Description,
-		IsCompleted: task.IsCompleted,
-		CreatedAt:   task.CreatedAt,
-		UpdatedAt:   task.UpdatedAt,
+		Task: Task{
+			ID:          task.ID,
+			Title:       task.Title,
+			Description: task.Description,
+			IsCompleted: task.IsCompleted,
+			CreatedAt:   task.CreatedAt,
+			UpdatedAt:   task.UpdatedAt,
+		},
 	})
 }
 
@@ -80,12 +86,7 @@ type TaskUpdateRequest struct {
 }
 
 type UpdateTaskResponse struct {
-	ID          string    `json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	IsCompleted bool      `json:"is_completed"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	Task Task `json:"task"`
 }
 
 func (tc *TaskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
@@ -134,11 +135,51 @@ func (tc *TaskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(UpdateTaskResponse{
-		ID:          task.ID,
-		Title:       task.Title,
-		Description: task.Description,
-		IsCompleted: task.IsCompleted,
-		CreatedAt:   task.CreatedAt,
-		UpdatedAt:   task.UpdatedAt,
+		Task: Task{
+			ID:          task.ID,
+			Title:       task.Title,
+			Description: task.Description,
+			IsCompleted: task.IsCompleted,
+			CreatedAt:   task.CreatedAt,
+			UpdatedAt:   task.UpdatedAt,
+		},
+	})
+}
+
+type ListTasksResponse struct {
+	Tasks []Task `json:"tasks"`
+}
+
+func (tc *TaskController) ListTasks(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserID(r)
+	if err != nil {
+		http.Error(w,
+			"not authenticated",
+			http.StatusUnauthorized)
+		return
+	}
+
+	tasks, err := tc.taskService.ListTasks(r.Context(), userID)
+	if err != nil {
+		http.Error(w,
+			"server error",
+			http.StatusInternalServerError)
+		return
+	}
+
+	listedTasks := []Task{}
+	for _, t := range tasks {
+		listedTasks = append(listedTasks, Task{
+			ID:          t.ID,
+			Title:       t.Title,
+			Description: t.Description,
+			IsCompleted: t.IsCompleted,
+			CreatedAt:   t.CreatedAt,
+			UpdatedAt:   t.UpdatedAt,
+		})
+	}
+
+	json.NewEncoder(w).Encode(ListTasksResponse{
+		Tasks: listedTasks,
 	})
 }
