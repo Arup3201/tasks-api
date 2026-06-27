@@ -106,7 +106,7 @@ func main() {
 	server := http.Server{
 		Addr: fmt.Sprintf("%s:%s", serverHost, serverPort),
 		Handler: cors.New(cors.Options{
-			AllowedMethods: []string{"HEAD", "GET", "POST", "PATCH"},
+			AllowedMethods: []string{"HEAD", "GET", "POST", "PATCH", "DELETE"},
 			AllowedHeaders: []string{"Authorization", "Content-Type"},
 		}).Handler(mux),
 		ReadTimeout:  10 * time.Second,
