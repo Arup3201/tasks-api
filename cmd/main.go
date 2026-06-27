@@ -59,14 +59,34 @@ func main() {
 	authMiddleware := middlewares.NewAuthMiddleware(jwtService)
 
 	mux := http.NewServeMux()
+
 	mux.HandleFunc("POST /register", authController.Register)
 	mux.HandleFunc("POST /login", authController.Login)
-	mux.Handle("POST /tasks",
-		authMiddleware.
+
+	taskEndpoints := []struct {
+		patter string
+		fn     http.HandlerFunc
+	}{
+		{
+			patter: "POST /tasks",
+			fn:     taskController.CreateTask,
+		},
+		{
+			patter: "PATCH /tasks/{id}",
+			fn:     taskController.UpdateTask,
+		},
+		{
+			patter: "GET /tasks",
+			fn:     taskController.ListTasks,
+		},
+	}
+
+	for _, ep := range taskEndpoints {
+		mux.Handle(ep.patter, authMiddleware.
 			Required(http.
-				HandlerFunc(taskController.CreateTask),
-			),
-	)
+				HandlerFunc(ep.fn),
+			))
+	}
 
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{
