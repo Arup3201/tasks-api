@@ -45,37 +45,23 @@ func (us *UserStore) Create(ctx context.Context,
 }
 
 func (us *UserStore) Get(ctx context.Context,
-	id string) (*UserModel, error) {
+	id string) (*User, error) {
 
 	userRow, err := gorm.G[User](us.db).Where("id = ?", id).First(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return &UserModel{
-		ID:           userRow.ID,
-		Name:         userRow.Name,
-		Email:        userRow.Email,
-		PasswordHash: userRow.PasswordHash,
-		CreatedAt:    userRow.CreatedAt,
-		UpdatedAt:    userRow.UpdatedAt,
-	}, nil
+	return &userRow, nil
 }
 
 func (us *UserStore) GetByEmail(ctx context.Context,
-	email string) (*UserModel, error) {
+	email string) (*User, error) {
 
 	userRow, err := gorm.G[User](us.db).Where("email = ?", email).First(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return &UserModel{
-		ID:           userRow.ID,
-		Name:         userRow.Name,
-		Email:        userRow.Email,
-		PasswordHash: userRow.PasswordHash,
-		CreatedAt:    userRow.CreatedAt,
-		UpdatedAt:    userRow.UpdatedAt,
-	}, nil
+	return &userRow, nil
 }

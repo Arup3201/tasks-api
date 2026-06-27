@@ -21,20 +21,20 @@ func (m *mockUserStore) Create(ctx context.Context, id, name, email string, pass
 	return args.Error(0)
 }
 
-func (m *mockUserStore) Get(ctx context.Context, id string) (*models.UserModel, error) {
+func (m *mockUserStore) Get(ctx context.Context, id string) (*models.User, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.UserModel), args.Error(1)
+	return args.Get(0).(*models.User), args.Error(1)
 }
 
-func (m *mockUserStore) GetByEmail(ctx context.Context, email string) (*models.UserModel, error) {
+func (m *mockUserStore) GetByEmail(ctx context.Context, email string) (*models.User, error) {
 	args := m.Called(ctx, email)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.UserModel), args.Error(1)
+	return args.Get(0).(*models.User), args.Error(1)
 }
 
 func TestCreateUser(t *testing.T) {
@@ -62,7 +62,7 @@ func TestCreateUser(t *testing.T) {
 					Return(nil)
 				store.
 					On("Get", mock.Anything, mock.AnythingOfType("string")).
-					Return(&models.UserModel{
+					Return(&models.User{
 						Email:     "test@example.com",
 						Name:      "Test User",
 						ID:        "generated-id",
@@ -169,7 +169,7 @@ func TestExchangeUserIDWithCredentials(t *testing.T) {
 			setupMock: func(store *mockUserStore) {
 				store.
 					On("GetByEmail", mock.Anything, "test@example.com").
-					Return(&models.UserModel{
+					Return(&models.User{
 						ID:           "user-1",
 						PasswordHash: hashed,
 					}, nil)
@@ -183,7 +183,7 @@ func TestExchangeUserIDWithCredentials(t *testing.T) {
 			setupMock: func(store *mockUserStore) {
 				store.
 					On("GetByEmail", mock.Anything, "test@example.com").
-					Return(&models.UserModel{
+					Return(&models.User{
 						ID:           "user-1",
 						PasswordHash: hashed,
 					}, nil)
@@ -197,7 +197,7 @@ func TestExchangeUserIDWithCredentials(t *testing.T) {
 			setupMock: func(store *mockUserStore) {
 				store.
 					On("GetByEmail", mock.Anything, "test@example.com").
-					Return((*models.UserModel)(nil), errors.New("db failure"))
+					Return((*models.User)(nil), errors.New("db failure"))
 			},
 			wantErr: models.ErrInvalidCredentials,
 		},

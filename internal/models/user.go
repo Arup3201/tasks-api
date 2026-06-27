@@ -41,9 +41,9 @@ type UserStoreInterface interface {
 		id, name, email string,
 		passwordHash []byte) error
 	Get(ctx context.Context,
-		id string) (*UserModel, error)
+		id string) (*User, error)
 	GetByEmail(ctx context.Context,
-		email string) (*UserModel, error)
+		email string) (*User, error)
 }
 
 type UserService struct {
@@ -78,13 +78,19 @@ func (us *UserService) CreateUser(ctx context.Context,
 		return nil, fmt.Errorf("store create: %w", err)
 	}
 
-	var user *UserModel
-	user, err = us.store.Get(ctx, id)
+	user, err := us.store.Get(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("store get: %w", err)
 	}
 
-	return user, nil
+	return &UserModel{
+		ID:           user.ID,
+		Name:         user.Name,
+		Email:        user.Email,
+		PasswordHash: user.PasswordHash,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+	}, nil
 }
 
 func (us *UserService) ExchangeUserWithCredentials(ctx context.Context,
@@ -99,5 +105,12 @@ func (us *UserService) ExchangeUserWithCredentials(ctx context.Context,
 		return nil, ErrInvalidCredentials
 	}
 
-	return user, nil
+	return &UserModel{
+		ID:           user.ID,
+		Name:         user.Name,
+		Email:        user.Email,
+		PasswordHash: user.PasswordHash,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+	}, nil
 }

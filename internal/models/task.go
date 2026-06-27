@@ -24,7 +24,9 @@ type TaskStoreInterface interface {
 		id, userID, title, description string,
 		isCompleted bool) error
 	Get(ctx context.Context,
-		id, userID string) (*TaskModel, error)
+		id, userID string) (*Task, error)
+	Update(ctx context.Context,
+		task *Task) error
 }
 
 type TaskService struct {
@@ -56,5 +58,64 @@ func (ts *TaskService) CreateTask(ctx context.Context,
 		return nil, err
 	}
 
-	return task, nil
+	return &TaskModel{
+		ID:          task.ID,
+		UserID:      task.UserID,
+		Title:       task.Title,
+		Description: task.Description,
+		IsCompleted: task.IsCompleted,
+		CreatedAt:   task.CreatedAt,
+		UpdatedAt:   task.UpdatedAt,
+	}, nil
+}
+
+func (ts *TaskService) UpdateTask(ctx context.Context,
+	id, userID string,
+	title, description *string,
+	isCompleted *bool) (*TaskModel, error) {
+
+	task, err := ts.store.Get(ctx, id, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if title != nil {
+		if strings.TrimSpace(*title) == "" {
+			return nil, ErrInvalidTask
+		}
+
+		task.Title = *title
+	}
+
+	if description != nil {
+		if strings.TrimSpace(*description) == "" {
+			return nil, ErrInvalidTask
+		}
+
+		task.Description = *description
+	}
+
+	if isCompleted != nil {
+		task.IsCompleted = *isCompleted
+	}
+
+	err = ts.store.Update(ctx, task)
+	if err != nil {
+		return nil, err
+	}
+
+	task, err = ts.store.Get(ctx, id, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TaskModel{
+		ID:          task.ID,
+		UserID:      task.UserID,
+		Title:       task.Title,
+		Description: task.Description,
+		IsCompleted: task.IsCompleted,
+		CreatedAt:   task.CreatedAt,
+		UpdatedAt:   task.UpdatedAt,
+	}, nil
 }

@@ -26,6 +26,13 @@ type createTaskResponse struct {
 	IsCompleted bool   `json:"is_completed"`
 }
 
+type updateTaskResponse struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	IsCompleted bool   `json:"is_completed"`
+}
+
 type CreateTaskTestSuite struct {
 	suite.Suite
 	controller *controllers.TaskController
@@ -73,8 +80,12 @@ func (e *errorTaskStore) Create(ctx context.Context, id, userID, title, descript
 	return errors.New("store failure")
 }
 
-func (e *errorTaskStore) Get(ctx context.Context, id, userID string) (*models.TaskModel, error) {
+func (e *errorTaskStore) Get(ctx context.Context, id, userID string) (*models.Task, error) {
 	return nil, errors.New("store failure")
+}
+
+func (e *errorTaskStore) Update(ctx context.Context, task *models.Task) error {
+	return errors.New("store failure")
 }
 
 func (s *CreateTaskTestSuite) TestCreateTaskEndpoint() {
@@ -167,4 +178,139 @@ func (s *CreateTaskTestSuite) TestCreateTaskEndpoint() {
 			assert.NotEmpty(s.T(), resp.ID)
 		})
 	}
+}
+
+func (s *CreateTaskTestSuite) TestUpdateTaskEndpoint() {
+	cases := []struct {
+		name         string
+		body         string
+		withAuth     bool
+		useFaultySvc bool
+		createTask   bool
+		taskID       string
+		wantStatus   int
+		wantError    string
+		wantTitle    string
+		wantDesc     string
+		wantComplete *bool
+	}{
+		{
+			name:         "success",
+			body:         `{"title":"Updated title","description":"Updated description","is_completed":true}`,
+			withAuth:     true,
+			createTask:   true,
+			wantStatus:   http.StatusOK,
+			wantTitle:    "Updated title",
+			wantDesc:     "Updated description",
+			wantComplete: boolPtr(true),
+		},
+		{
+			name:       "missing auth",
+			body:       `{"title":"Updated title","description":"Updated description"}`,
+			withAuth:   false,
+			createTask: true,
+			wantStatus: http.StatusUnauthorized,
+			wantError:  "not authenticated",
+		},
+		{
+			name:       "missing id",
+			body:       `{"title":"Updated title","description":"Updated description"}`,
+			withAuth:   true,
+			wantStatus: http.StatusBadRequest,
+			wantError:  "empty task ID",
+		},
+		{
+			name:       "invalid json",
+			body:       `{"title":"Updated title","description":"Updated description"`,
+			withAuth:   true,
+			createTask: true,
+			wantStatus: http.StatusBadRequest,
+			wantError:  "json parse error",
+		},
+		{
+			name:       "invalid title",
+			body:       `{"title":"   ","description":"Updated description"}`,
+			withAuth:   true,
+			createTask: true,
+			wantStatus: http.StatusBadRequest,
+			wantError:  "invalid task title or description provided",
+		},
+		{
+			name:       "invalid description",
+			body:       `{"title":"Updated title","description":"   "}`,
+			withAuth:   true,
+			createTask: true,
+			wantStatus: http.StatusBadRequest,
+			wantError:  "invalid task title or description provided",
+		},
+		{
+			name:       "task not found",
+			body:       `{"title":"Updated title","description":"Updated description"}`,
+			withAuth:   true,
+			taskID:     "missing-task-id",
+			wantStatus: http.StatusNotFound,
+			wantError:  "task not found",
+		},
+		{
+			name:         "server error",
+			body:         `{"title":"Updated title","description":"Updated description"}`,
+			withAuth:     true,
+			createTask:   true,
+			useFaultySvc: true,
+			wantStatus:   http.StatusInternalServerError,
+			wantError:    "server error",
+		},
+	}
+
+	for _, tc := range cases {
+		s.Run(tc.name, func() {
+			var taskID string
+			if tc.createTask {
+				createdTask, err := s.taskSvc.CreateTask(context.Background(), s.userID, "Original title", "Original description")
+				s.Require().NoError(err)
+				taskID = createdTask.ID
+			} else if tc.taskID != "" {
+				taskID = tc.taskID
+			}
+
+			url := "/tasks"
+			if taskID != "" {
+				url += "?id=" + taskID
+			}
+
+			req := httptest.NewRequest(http.MethodPut, url, bytes.NewBufferString(tc.body))
+			if tc.withAuth {
+				req = req.WithContext(context.WithValue(req.Context(), "user_id", s.userID))
+			}
+
+			rec := httptest.NewRecorder()
+
+			controller := s.controller
+			if tc.useFaultySvc {
+				controller = controllers.NewTaskController(models.NewTaskService(&errorTaskStore{}))
+			}
+
+			controller.UpdateTask(rec, req)
+
+			assert.Equal(s.T(), tc.wantStatus, rec.Code)
+
+			if tc.wantError != "" {
+				assert.Contains(s.T(), rec.Body.String(), tc.wantError)
+				return
+			}
+
+			var resp updateTaskResponse
+			require.NoError(s.T(), json.NewDecoder(rec.Body).Decode(&resp))
+			assert.Equal(s.T(), tc.wantTitle, resp.Title)
+			assert.Equal(s.T(), tc.wantDesc, resp.Description)
+			if tc.wantComplete != nil {
+				assert.Equal(s.T(), *tc.wantComplete, resp.IsCompleted)
+			}
+			assert.NotEmpty(s.T(), resp.ID)
+		})
+	}
+}
+
+func boolPtr(v bool) *bool {
+	return &v
 }

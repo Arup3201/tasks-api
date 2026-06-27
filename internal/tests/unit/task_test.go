@@ -20,12 +20,17 @@ func (m *mockTaskStore) Create(ctx context.Context, id, userID, title, descripti
 	return args.Error(0)
 }
 
-func (m *mockTaskStore) Get(ctx context.Context, id, userID string) (*models.TaskModel, error) {
+func (m *mockTaskStore) Get(ctx context.Context, id, userID string) (*models.Task, error) {
 	args := m.Called(ctx, id, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.TaskModel), args.Error(1)
+	return args.Get(0).(*models.Task), args.Error(1)
+}
+
+func (m *mockTaskStore) Update(ctx context.Context, task *models.Task) error {
+	args := m.Called(ctx, task)
+	return args.Error(0)
 }
 
 func TestCreateTask(t *testing.T) {
@@ -53,7 +58,7 @@ func TestCreateTask(t *testing.T) {
 					Return(nil)
 				store.
 					On("Get", mock.Anything, mock.AnythingOfType("string"), "user-1").
-					Return(&models.TaskModel{
+					Return(&models.Task{
 						ID:          "generated-id",
 						UserID:      "user-1",
 						Title:       "Write tests",
@@ -92,7 +97,7 @@ func TestCreateTask(t *testing.T) {
 					Return(nil)
 				store.
 					On("Get", mock.Anything, mock.AnythingOfType("string"), "user-1").
-					Return(&models.TaskModel{ID: "generated-id", UserID: "user-1", Title: "  Write tests  ", Description: "  Add unit tests  "}, nil)
+					Return(&models.Task{ID: "generated-id", UserID: "user-1", Title: "  Write tests  ", Description: "  Add unit tests  "}, nil)
 			},
 			wantCreate: true,
 			wantGet:    true,
@@ -121,7 +126,7 @@ func TestCreateTask(t *testing.T) {
 					Return(nil)
 				store.
 					On("Get", mock.Anything, mock.AnythingOfType("string"), "user-1").
-					Return((*models.TaskModel)(nil), errors.New("get failed"))
+					Return((*models.Task)(nil), errors.New("get failed"))
 			},
 			wantErrContains: "get failed",
 			wantCreate:      true,
@@ -164,6 +169,188 @@ func TestCreateTask(t *testing.T) {
 				store.AssertCalled(t, "Get", mock.Anything, mock.AnythingOfType("string"), tc.userID)
 			} else {
 				store.AssertNotCalled(t, "Get", mock.Anything, mock.Anything, mock.Anything)
+			}
+
+			store.AssertExpectations(t)
+		})
+	}
+}
+
+func TestUpdateTask(t *testing.T) {
+	ctx := context.Background()
+
+	newString := func(value string) *string { return &value }
+	newBool := func(value bool) *bool { return &value }
+
+	cases := []struct {
+		name            string
+		title           *string
+		description     *string
+		isCompleted     *bool
+		setupMock       func(store *mockTaskStore)
+		wantErr         error
+		wantErrContains string
+		wantUpdate      bool
+		wantUpdatedTask func(t *testing.T, task models.TaskModel)
+	}{
+		{
+			name:        "success updates all fields",
+			title:       newString("Updated title"),
+			description: newString("Updated description"),
+			isCompleted: newBool(true),
+			setupMock: func(store *mockTaskStore) {
+				store.On("Get", mock.Anything, "task-1", "user-1").Return(&models.Task{ID: "task-1", UserID: "user-1", Title: "Original title", Description: "Original description"}, nil)
+				store.On("Update", mock.Anything, mock.MatchedBy(func(task *models.Task) bool {
+					return task != nil && task.ID == "task-1" && task.UserID == "user-1" && task.Title == "Updated title" && task.Description == "Updated description" && task.IsCompleted
+				})).Return(nil)
+			},
+			wantUpdate: true,
+			wantUpdatedTask: func(t *testing.T, task models.TaskModel) {
+				assert.Equal(t, "Updated title", task.Title)
+				assert.Equal(t, "Updated description", task.Description)
+				assert.Equal(t, true, task.IsCompleted)
+			},
+		},
+		{
+			name:        "update only title",
+			title:       newString("Updated title"),
+			description: nil,
+			isCompleted: nil,
+			setupMock: func(store *mockTaskStore) {
+				store.On("Get", mock.Anything, "task-1", "user-1").Return(&models.Task{ID: "task-1", UserID: "user-1", Title: "Original title", Description: "Original description"}, nil)
+				store.On("Update", mock.Anything, mock.MatchedBy(func(task *models.Task) bool {
+					return task != nil && task.Title == "Updated title" && task.Description == "Original description" && !task.IsCompleted
+				})).Return(nil)
+			},
+			wantUpdate: true,
+			wantUpdatedTask: func(t *testing.T, task models.TaskModel) {
+				assert.Equal(t, "Updated title", task.Title)
+				assert.Equal(t, "Original description", task.Description)
+				assert.Equal(t, false, task.IsCompleted)
+			},
+		},
+		{
+			name:        "update only description",
+			title:       nil,
+			description: newString("Updated description"),
+			isCompleted: nil,
+			setupMock: func(store *mockTaskStore) {
+				store.On("Get", mock.Anything, "task-1", "user-1").Return(&models.Task{ID: "task-1", UserID: "user-1", Title: "Original title", Description: "Original description"}, nil)
+				store.On("Update", mock.Anything, mock.MatchedBy(func(task *models.Task) bool {
+					return task != nil && task.Title == "Original title" && task.Description == "Updated description" && !task.IsCompleted
+				})).Return(nil)
+			},
+			wantUpdate: true,
+			wantUpdatedTask: func(t *testing.T, task models.TaskModel) {
+				assert.Equal(t, "Original title", task.Title)
+				assert.Equal(t, "Updated description", task.Description)
+				assert.Equal(t, false, task.IsCompleted)
+			},
+		},
+		{
+			name:        "update only completion status",
+			title:       nil,
+			description: nil,
+			isCompleted: newBool(true),
+			setupMock: func(store *mockTaskStore) {
+				store.On("Get", mock.Anything, "task-1", "user-1").Return(&models.Task{ID: "task-1", UserID: "user-1", Title: "Original title", Description: "Original description"}, nil)
+				store.On("Update", mock.Anything, mock.MatchedBy(func(task *models.Task) bool {
+					return task != nil && task.Title == "Original title" && task.Description == "Original description" && task.IsCompleted
+				})).Return(nil)
+			},
+			wantUpdate: true,
+			wantUpdatedTask: func(t *testing.T, task models.TaskModel) {
+				assert.Equal(t, "Original title", task.Title)
+				assert.Equal(t, "Original description", task.Description)
+				assert.Equal(t, true, task.IsCompleted)
+			},
+		},
+		{
+			name:        "no-op update keeps the task unchanged",
+			title:       nil,
+			description: nil,
+			isCompleted: nil,
+			setupMock: func(store *mockTaskStore) {
+				store.On("Get", mock.Anything, "task-1", "user-1").Return(&models.Task{ID: "task-1", UserID: "user-1", Title: "Original title", Description: "Original description"}, nil)
+				store.On("Update", mock.Anything, mock.MatchedBy(func(task *models.Task) bool {
+					return task != nil && task.Title == "Original title" && task.Description == "Original description" && !task.IsCompleted
+				})).Return(nil)
+			},
+			wantUpdate: true,
+			wantUpdatedTask: func(t *testing.T, task models.TaskModel) {
+				assert.Equal(t, "Original title", task.Title)
+				assert.Equal(t, "Original description", task.Description)
+				assert.Equal(t, false, task.IsCompleted)
+			},
+		},
+		{
+			name:        "invalid title is rejected",
+			title:       newString("   "),
+			description: newString("Updated description"),
+			setupMock: func(store *mockTaskStore) {
+				store.On("Get", mock.Anything, "task-1", "user-1").Return(&models.Task{ID: "task-1", UserID: "user-1", Title: "Original title", Description: "Original description"}, nil)
+			},
+			wantErr: models.ErrInvalidTask,
+		},
+		{
+			name:        "invalid description is rejected",
+			title:       newString("Updated title"),
+			description: newString("   "),
+			setupMock: func(store *mockTaskStore) {
+				store.On("Get", mock.Anything, "task-1", "user-1").Return(&models.Task{ID: "task-1", UserID: "user-1", Title: "Original title", Description: "Original description"}, nil)
+			},
+			wantErr: models.ErrInvalidTask,
+		},
+		{
+			name:        "store get failure",
+			title:       newString("Updated title"),
+			description: newString("Updated description"),
+			setupMock: func(store *mockTaskStore) {
+				store.On("Get", mock.Anything, "task-1", "user-1").Return((*models.Task)(nil), errors.New("get failed"))
+			},
+			wantErrContains: "get failed",
+		},
+		{
+			name:        "store update failure",
+			title:       newString("Updated title"),
+			description: newString("Updated description"),
+			isCompleted: newBool(true),
+			setupMock: func(store *mockTaskStore) {
+				store.On("Get", mock.Anything, "task-1", "user-1").Return(&models.Task{ID: "task-1", UserID: "user-1", Title: "Original title", Description: "Original description"}, nil)
+				store.On("Update", mock.Anything, mock.Anything).Return(errors.New("update failed"))
+			},
+			wantErrContains: "update failed",
+			wantUpdate:      true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &mockTaskStore{}
+			if tc.setupMock != nil {
+				tc.setupMock(store)
+			}
+
+			service := models.NewTaskService(store)
+			task, err := service.UpdateTask(ctx, "task-1", "user-1", tc.title, tc.description, tc.isCompleted)
+
+			if tc.wantErr != nil {
+				assert.ErrorIs(t, err, tc.wantErr)
+			} else if tc.wantErrContains != "" {
+				assert.ErrorContains(t, err, tc.wantErrContains)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			store.AssertCalled(t, "Get", mock.Anything, "task-1", "user-1")
+			if tc.wantUpdate {
+				store.AssertCalled(t, "Update", mock.Anything, mock.Anything)
+			} else {
+				store.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+			}
+
+			if tc.wantUpdatedTask != nil {
+				tc.wantUpdatedTask(t, *task)
 			}
 
 			store.AssertExpectations(t)

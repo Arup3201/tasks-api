@@ -2,9 +2,14 @@ package models
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"gorm.io/gorm"
+)
+
+var (
+	ErrTaskNotFound = errors.New("task not found")
 )
 
 type Task struct {
@@ -43,23 +48,26 @@ func (ts *TaskStore) Create(ctx context.Context,
 }
 
 func (ts *TaskStore) Get(ctx context.Context,
-	id, userID string) (*TaskModel, error) {
+	id, userID string) (*Task, error) {
 
 	task, err := gorm.
 		G[Task](ts.db).
 		Where("id = ? AND user_id = ?", id, userID).
 		First(ctx)
-	if err != nil {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrTaskNotFound
+	} else if err != nil {
 		return nil, err
 	}
 
-	return &TaskModel{
-		ID:          task.ID,
-		UserID:      task.UserID,
-		Title:       task.Title,
-		Description: task.Description,
-		IsCompleted: task.IsCompleted,
-		CreatedAt:   task.CreatedAt,
-		UpdatedAt:   task.UpdatedAt,
-	}, nil
+	return &task, nil
+}
+
+func (ts *TaskStore) Update(ctx context.Context,
+	task *Task) error {
+	if err := ts.db.Save(task).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
