@@ -3,9 +3,11 @@ package unit
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/Arup3201/gotasks/internal/config"
 	"github.com/Arup3201/gotasks/internal/middlewares"
 	"github.com/Arup3201/gotasks/internal/utils"
 	"github.com/golang-jwt/jwt/v5"
@@ -14,9 +16,10 @@ import (
 )
 
 func TestAuthMiddleware(t *testing.T) {
-	secret := "test-secret"
-	issuer := "test-issuer"
-	jwtSvc := utils.NewJWTService(secret, issuer)
+	os.Setenv("JWT_SECRET", "test-secret")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	config := config.Load()
+	jwtSvc := utils.NewJWTService(config)
 
 	// Generate a valid token
 	validToken, err := jwtSvc.GenerateToken("user-123", "test@example.com")
@@ -29,10 +32,10 @@ func TestAuthMiddleware(t *testing.T) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-1 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now().Add(-2 * time.Hour)),
-			Issuer:    issuer,
+			Issuer:    config.JWT.Issuer,
 		},
 	}
-	expiredToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, expiredClaims).SignedString([]byte(secret))
+	expiredToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, expiredClaims).SignedString([]byte(config.JWT.Secret))
 	require.NoError(t, err)
 
 	// Generate a token with invalid signature
@@ -42,7 +45,7 @@ func TestAuthMiddleware(t *testing.T) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    issuer,
+			Issuer:    config.JWT.Issuer,
 		},
 	}
 	invalidSigToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, invalidSigClaims).SignedString([]byte("wrong-secret"))

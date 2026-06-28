@@ -1,19 +1,22 @@
 package unit
 
 import (
+	"os"
 	"testing"
 	"time"
 
+	"github.com/Arup3201/gotasks/internal/config"
 	"github.com/Arup3201/gotasks/internal/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestJWTValidate(t *testing.T) {
-	secret := "test-secret"
-	issuer := "test-issuer"
+	os.Setenv("JWT_SECRET", "test-secret")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	config := config.Load()
 
-	svc := utils.NewJWTService(secret, issuer)
+	svc := utils.NewJWTService(config)
 
 	validToken, err := svc.GenerateToken("user-1", "user@example.com")
 	if err != nil {
@@ -27,10 +30,10 @@ func TestJWTValidate(t *testing.T) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-1 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now().Add(-2 * time.Hour)),
-			Issuer:    issuer,
+			Issuer:    config.JWT.Issuer,
 		},
 	}
-	expiredToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, expiredClaims).SignedString([]byte(secret))
+	expiredToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, expiredClaims).SignedString([]byte(config.JWT.Secret))
 	if err != nil {
 		t.Fatalf("create expired token: %v", err)
 	}
@@ -42,7 +45,7 @@ func TestJWTValidate(t *testing.T) {
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    issuer,
+			Issuer:    config.JWT.Issuer,
 		},
 	}).SignedString([]byte("other-secret"))
 	if err != nil {
@@ -75,9 +78,11 @@ func TestJWTValidate(t *testing.T) {
 }
 
 func TestJWTRefresh(t *testing.T) {
-	secret := "refresh-secret"
-	issuer := "refresh-issuer"
-	svc := utils.NewJWTService(secret, issuer)
+	os.Setenv("JWT_SECRET", "test-secret")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	config := config.Load()
+
+	svc := utils.NewJWTService(config)
 
 	token, err := svc.GenerateToken("user-refresh", "ref@example.com")
 	if err != nil {

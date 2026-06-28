@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Arup3201/gotasks/internal/config"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -25,10 +26,10 @@ type JWTService struct {
 	issuer    string
 }
 
-func NewJWTService(secretKey, issuer string) *JWTService {
+func NewJWTService(config *config.Config) *JWTService {
 	return &JWTService{
-		secretKey: []byte(secretKey),
-		issuer:    issuer,
+		secretKey: []byte(config.JWT.Secret),
+		issuer:    config.JWT.Issuer,
 	}
 }
 

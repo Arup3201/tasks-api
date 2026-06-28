@@ -2,9 +2,11 @@ package integration
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/Arup3201/gotasks/internal/config"
 	"github.com/Arup3201/gotasks/internal/models"
 	"github.com/Arup3201/gotasks/internal/testutils"
 	"github.com/Arup3201/gotasks/internal/utils"
@@ -35,9 +37,13 @@ func TestUserRegistrationAndLoginWorkflow(t *testing.T) {
 		t.Fatalf("failed to migrate user schema: %v", err)
 	}
 
+	os.Setenv("JWT_SECRET", "test-secret")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	config := config.Load()
+
 	store := models.NewUserStore(db)
 	userService := models.NewUserService(store)
-	jwtService := utils.NewJWTService("test-secret", "test-issuer")
+	jwtService := utils.NewJWTService(config)
 
 	createdUser, err := userService.CreateUser(ctx, "alice@example.com", "Alice Example", "secret123")
 	if err != nil {

@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/Arup3201/gotasks/internal/config"
 	"github.com/Arup3201/gotasks/internal/controllers"
 	"github.com/Arup3201/gotasks/internal/models"
 	"github.com/Arup3201/gotasks/internal/testutils"
@@ -62,8 +64,12 @@ func (s *AuthTestSuite) SetupSuite() {
 
 	s.Require().NoError(db.AutoMigrate(&models.User{}))
 
+	os.Setenv("JWT_SECRET", "test-secret")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	config := config.Load()
+
 	s.userSvc = models.NewUserService(models.NewUserStore(db))
-	s.jwtSvc = utils.NewJWTService("test-secret", "test-issuer")
+	s.jwtSvc = utils.NewJWTService(config)
 
 	s.controller = controllers.NewAuthController(s.userSvc, s.jwtSvc)
 }
