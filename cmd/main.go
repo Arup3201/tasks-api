@@ -76,7 +76,11 @@ func main() {
 		Handler: cors.New(cors.Options{
 			AllowedMethods: []string{"HEAD", "GET", "POST", "PATCH", "DELETE"},
 			AllowedHeaders: []string{"Authorization", "Content-Type"},
-		}).Handler(mux),
+		}).Handler(
+			middlewares.
+				NewLogger(config.Logging.Level,
+					config.Logging.Format).
+				RequireLogging(mux)),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 20 * time.Second,
 	}
