@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Arup3201/gotasks/internal/controllers"
+	"github.com/Arup3201/gotasks/internal/health"
 	"github.com/Arup3201/gotasks/internal/middlewares"
 	"github.com/Arup3201/gotasks/internal/models"
 	"github.com/Arup3201/gotasks/internal/utils"
@@ -95,11 +95,8 @@ func main() {
 			))
 	}
 
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(map[string]string{
-			"status": "healthy",
-		})
-	})
+	healthChecker := health.NewHealthChecker(db)
+	mux.HandleFunc("GET /health", healthChecker.HealthHandler)
 
 	serverHost := getEnv("HOST")
 	serverPort := getEnv("PORT")
