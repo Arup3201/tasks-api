@@ -70,17 +70,23 @@ func main() {
 
 	healthChecker := health.NewHealthChecker(db)
 	mux.HandleFunc("GET /health", healthChecker.HealthHandler)
+	mux.Handle("GET /metrics", middlewares.MetricHandler())
+
+	loggingMiddleware := middlewares.
+		NewLogger(config.Logging.Level,
+			config.Logging.Format)
+	corrMiddleware := cors.New(cors.Options{
+		AllowedMethods: []string{"HEAD", "GET", "POST", "PATCH", "DELETE"},
+		AllowedHeaders: []string{"Authorization", "Content-Type"},
+	})
 
 	server := http.Server{
 		Addr: fmt.Sprintf("%s:%s", config.Server.Host, config.Server.Port),
-		Handler: cors.New(cors.Options{
-			AllowedMethods: []string{"HEAD", "GET", "POST", "PATCH", "DELETE"},
-			AllowedHeaders: []string{"Authorization", "Content-Type"},
-		}).Handler(
-			middlewares.
-				NewLogger(config.Logging.Level,
-					config.Logging.Format).
-				RequireLogging(mux)),
+		Handler: loggingMiddleware.RequireLogging(
+			corrMiddleware.Handler(
+				middlewares.PrometheusMiddleware(mux),
+			),
+		),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 20 * time.Second,
 	}
