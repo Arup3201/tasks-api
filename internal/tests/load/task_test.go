@@ -16,36 +16,47 @@ import (
 	"github.com/Arup3201/gotasks/internal/models"
 	"github.com/Arup3201/gotasks/internal/testutils"
 	"github.com/Arup3201/gotasks/internal/utils"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
-func TestLoadCreateTaskEndpoint(t *testing.T) {
-	ctx := context.Background()
-	pg, err := testutils.CreatePostgresContainer(ctx)
-	require.NoError(t, err, "could not start postgres container")
+type LoadSuite struct {
+	suite.Suite
+	ctx        context.Context
+	pg         *testutils.PostgresContainer
+	token      string
+	httpServer http.Server
+}
 
-	t.Cleanup(func() {
-		require.NoError(t, pg.Terminate(ctx), "could not terminate postgres container")
+func TestLoadSuite(t *testing.T) {
+	suite.Run(t, new(LoadSuite))
+}
+
+func (s *LoadSuite) SetupSuite() {
+	var err error
+
+	s.ctx = context.Background()
+	s.pg, err = testutils.CreatePostgresContainer(s.ctx)
+	s.Require().NoError(err, "could not start postgres container")
+
+	db, err := gorm.Open(postgres.Open(s.pg.ConnectionString), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
 	})
+	s.Require().NoError(err, "failed to open gorm db")
+	s.Require().NoError(db.AutoMigrate(&models.User{}, &models.Task{}), "failed to migrate schema")
 
-	db, err := gorm.Open(postgres.Open(pg.ConnectionString), &gorm.Config{})
-	require.NoError(t, err, "failed to open gorm db")
-
-	require.NoError(t, db.AutoMigrate(&models.User{}, &models.Task{}), "failed to migrate schema")
-
-	t.Setenv("HOST", "localhost")
-	t.Setenv("PORT", "8080")
-	t.Setenv("JWT_SECRET", "test-secret")
-	t.Setenv("JWT_ISSUER", "test-issuer")
+	s.T().Setenv("HOST", "localhost")
+	s.T().Setenv("PORT", "8080")
+	s.T().Setenv("JWT_SECRET", "test-secret")
+	s.T().Setenv("JWT_ISSUER", "test-issuer")
 	config := config.Load()
 
 	userStore := models.NewUserStore(db)
 	userService := models.NewUserService(userStore)
 	testUser, err := userService.CreateUser(context.Background(), "task-user@example.com", "Task User", "secret123")
-	require.NoError(t, err, "failed to create user")
+	s.Require().NoError(err, "failed to create user")
 
 	taskStore := models.NewTaskStore(db)
 	taskService := models.NewTaskService(taskStore)
@@ -53,22 +64,36 @@ func TestLoadCreateTaskEndpoint(t *testing.T) {
 	taskController := controllers.NewTaskController(taskService)
 	authMiddleware := middlewares.NewAuthMiddleware(jwtService)
 
-	accessToken, _ := jwtService.GenerateToken(testUser.ID, testUser.Email)
+	s.token, _ = jwtService.GenerateToken(testUser.ID, testUser.Email)
 
 	mux := http.NewServeMux()
 	mux.Handle("POST /tasks", authMiddleware.
 		Required(http.
 			HandlerFunc(taskController.CreateTask),
 		))
-	server := http.Server{
+	mux.Handle("PATCH /tasks/{id}", authMiddleware.
+		Required(http.
+			HandlerFunc(taskController.UpdateTask),
+		))
+	s.httpServer = http.Server{
 		Addr:         fmt.Sprintf("%s:%s", config.Server.Host, config.Server.Port),
-		Handler:      (mux),
+		Handler:      mux,
 		ReadTimeout:  config.Server.ReadTimeout,
 		WriteTimeout: config.Server.WriteTimeout,
 		IdleTimeout:  config.Server.IdleTimeout,
 	}
-	go server.ListenAndServe()
+	go s.httpServer.ListenAndServe()
+}
 
+func (s *LoadSuite) Teardown() {
+	s.Require().NoError(s.pg.Terminate(s.ctx), "could not terminate postgres container")
+
+	timeredCtx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
+	s.Require().NoError(s.httpServer.Shutdown(timeredCtx))
+	defer cancel()
+}
+
+func (s *LoadSuite) TestLoadCreateTaskEndpoint() {
 	var (
 		concurrency = 50
 		requests    = 1000
@@ -99,7 +124,7 @@ func TestLoadCreateTaskEndpoint(t *testing.T) {
 
 			req, _ := http.NewRequest("POST", baseUrl+"/tasks", bytes.NewBuffer(jsonBody))
 			req.Header.Set("Content-Type", "application/json")
-			req.Header.Set("Authorization", "Bearer "+accessToken)
+			req.Header.Set("Authorization", "Bearer "+s.token)
 
 			response, err := client.Do(req)
 
@@ -134,10 +159,6 @@ func TestLoadCreateTaskEndpoint(t *testing.T) {
 
 	totalDuration := time.Since(startTime)
 
-	timeredCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	require.NoError(t, server.Shutdown(timeredCtx))
-	defer cancel()
-
 	var (
 		successCount = 0
 		totalLatency time.Duration
@@ -161,17 +182,151 @@ func TestLoadCreateTaskEndpoint(t *testing.T) {
 	avgLatency := totalLatency / time.Duration(requests)
 	throughput := float64(successCount) / totalDuration.Seconds()
 
-	t.Logf("Load test results:")
-	t.Logf("Total requests: %d", requests)
-	t.Logf("Successful requests: %d", successCount)
-	t.Logf("Success rate: %.2f%%", float64(successCount)/float64(requests)*100)
-	t.Logf("Total duration: %v", totalDuration)
-	t.Logf("Throughput: %.2f requests/second", throughput)
-	t.Logf("Average latency: %v", avgLatency)
-	t.Logf("Min latency: %v", minLatency)
-	t.Logf("Max latency: %v", maxLatency)
+	s.T().Logf("Load test results:")
+	s.T().Logf("Total requests: %d", requests)
+	s.T().Logf("Successful requests: %d", successCount)
+	s.T().Logf("Success rate: %.2f%%", float64(successCount)/float64(requests)*100)
+	s.T().Logf("Total duration: %v", totalDuration)
+	s.T().Logf("Throughput: %.2f requests/second", throughput)
+	s.T().Logf("Average latency: %v", avgLatency)
+	s.T().Logf("Min latency: %v", minLatency)
+	s.T().Logf("Max latency: %v", maxLatency)
 
-	// Assertions
-	assert.True(t, float64(successCount)/float64(requests) > 0.95, "Success rate should be > 95%")
-	assert.True(t, avgLatency < 100*time.Millisecond, "Average latency should be < 100ms")
+	s.Require().True(float64(successCount)/float64(requests) > 0.95, "Success rate should be > 95%")
+	s.Require().True(avgLatency < 100*time.Millisecond, "Average latency should be < 100ms")
+}
+
+func (s *LoadSuite) TestLoadUpdateTaskEndpoint() {
+	var (
+		concurrency = 50
+		requests    = 1000
+		baseUrl     = "http://localhost:8080"
+	)
+
+	type result struct {
+		code     int
+		duration time.Duration
+		err      error
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	jsonBody, _ := json.Marshal(controllers.CreateTaskRequest{
+		Title:       "Original Title",
+		Description: "Original Description",
+	})
+
+	req, _ := http.NewRequest("POST", baseUrl+"/tasks", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+s.token)
+
+	response, err := client.Do(req)
+
+	s.Require().NoError(err)
+	s.Require().Equal(201, response.StatusCode)
+
+	var v controllers.CreateTaskResponse
+	json.NewDecoder(response.Body).Decode(&v)
+
+	taskID := v.Task.ID
+
+	newString := func(s string) *string {
+		return &s
+	}
+	newBool := func(bl bool) *bool {
+		return &bl
+	}
+
+	var wg sync.WaitGroup
+	var results = make(chan result, requests)
+
+	worker := func(taskChan <-chan int) {
+		defer wg.Done()
+
+		client := &http.Client{Timeout: 10 * time.Second}
+
+		for i := range taskChan {
+			startTime := time.Now()
+
+			jsonBody, _ := json.Marshal(controllers.TaskUpdateRequest{
+				Title:       newString(fmt.Sprintf("Load Test Task Title %d", i)),
+				Description: newString(fmt.Sprintf("Load Test Task Description %d", i)),
+				IsCompleted: newBool(true),
+			})
+
+			req, _ := http.NewRequest("PATCH", baseUrl+"/tasks/"+taskID, bytes.NewBuffer(jsonBody))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+s.token)
+
+			response, err := client.Do(req)
+
+			res := result{
+				duration: time.Since(startTime),
+				err:      err,
+			}
+
+			if response != nil {
+				res.code = response.StatusCode
+				response.Body.Close()
+			}
+
+			if err != nil {
+				s.T().Log(err)
+			}
+			results <- res
+		}
+	}
+
+	var taskChan = make(chan int, requests)
+	for range concurrency {
+		wg.Add(1)
+		go worker(taskChan)
+	}
+
+	startTime := time.Now()
+	for i := range requests {
+		taskChan <- i
+	}
+	close(taskChan)
+
+	wg.Wait()
+	close(results)
+
+	totalDuration := time.Since(startTime)
+
+	var (
+		successCount = 0
+		totalLatency time.Duration
+		maxLatency   time.Duration
+		minLatency   = time.Hour
+	)
+	for res := range results {
+		if res.err == nil && res.code == http.StatusOK {
+			successCount++
+		}
+
+		totalLatency += res.duration
+		if res.duration > maxLatency {
+			maxLatency = res.duration
+		}
+		if res.duration < minLatency {
+			minLatency = res.duration
+		}
+	}
+
+	avgLatency := totalLatency / time.Duration(requests)
+	throughput := float64(successCount) / totalDuration.Seconds()
+
+	s.T().Logf("Load test results:")
+	s.T().Logf("Total requests: %d", requests)
+	s.T().Logf("Successful requests: %d", successCount)
+	s.T().Logf("Success rate: %.2f%%", float64(successCount)/float64(requests)*100)
+	s.T().Logf("Total duration: %v", totalDuration)
+	s.T().Logf("Throughput: %.2f requests/second", throughput)
+	s.T().Logf("Average latency: %v", avgLatency)
+	s.T().Logf("Min latency: %v", minLatency)
+	s.T().Logf("Max latency: %v", maxLatency)
+
+	s.Require().True(float64(successCount)/float64(requests) > 0.95, "Success rate should be > 95%")
+	s.Require().True(avgLatency < 100*time.Millisecond, "Average latency should be < 100ms")
 }
