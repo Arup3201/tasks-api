@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Arup3201/gotasks/internal/config"
+	"github.com/Arup3201/gotask/internal/config"
 	"github.com/golang-jwt/jwt/v5"
 )
 

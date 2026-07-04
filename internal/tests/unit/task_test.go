@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Arup3201/gotasks/internal/models"
+	"github.com/Arup3201/gotask/internal/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

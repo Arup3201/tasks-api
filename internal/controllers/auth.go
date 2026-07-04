@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Arup3201/gotasks/internal/models"
-	"github.com/Arup3201/gotasks/internal/utils"
+	"github.com/Arup3201/gotask/internal/models"
+	"github.com/Arup3201/gotask/internal/utils"
 )
 
 type AuthController struct {

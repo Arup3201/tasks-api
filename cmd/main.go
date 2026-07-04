@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Arup3201/gotasks/internal/config"
-	"github.com/Arup3201/gotasks/internal/controllers"
-	"github.com/Arup3201/gotasks/internal/health"
-	"github.com/Arup3201/gotasks/internal/middlewares"
-	"github.com/Arup3201/gotasks/internal/models"
-	"github.com/Arup3201/gotasks/internal/storages"
-	"github.com/Arup3201/gotasks/internal/utils"
+	"github.com/Arup3201/gotask/internal/config"
+	"github.com/Arup3201/gotask/internal/controllers"
+	"github.com/Arup3201/gotask/internal/health"
+	"github.com/Arup3201/gotask/internal/middlewares"
+	"github.com/Arup3201/gotask/internal/models"
+	"github.com/Arup3201/gotask/internal/storages"
+	"github.com/Arup3201/gotask/internal/utils"
 	"github.com/rs/cors"
 )
 

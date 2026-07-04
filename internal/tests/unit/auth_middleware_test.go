@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Arup3201/gotasks/internal/config"
-	"github.com/Arup3201/gotasks/internal/middlewares"
-	"github.com/Arup3201/gotasks/internal/utils"
+	"github.com/Arup3201/gotask/internal/config"
+	"github.com/Arup3201/gotask/internal/middlewares"
+	"github.com/Arup3201/gotask/internal/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Arup3201/gotasks/internal/utils"
+	"github.com/Arup3201/gotask/internal/utils"
 )
 
 var (

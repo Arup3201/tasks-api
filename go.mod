@@ -1,4 +1,4 @@
-module github.com/Arup3201/gotasks
+module github.com/Arup3201/gotask
 
 go 1.25.0
 

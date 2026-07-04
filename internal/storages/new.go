@@ -3,8 +3,8 @@ package storages
 import (
 	"fmt"
 
-	"github.com/Arup3201/gotasks/internal/config"
-	"github.com/Arup3201/gotasks/internal/models"
+	"github.com/Arup3201/gotask/internal/config"
+	"github.com/Arup3201/gotask/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

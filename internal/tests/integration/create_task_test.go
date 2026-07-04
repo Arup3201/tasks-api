@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Arup3201/gotasks/internal/models"
-	"github.com/Arup3201/gotasks/internal/testutils"
+	"github.com/Arup3201/gotask/internal/models"
+	"github.com/Arup3201/gotask/internal/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/driver/postgres"

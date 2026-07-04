@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Arup3201/gotasks/internal/models"
+	"github.com/Arup3201/gotask/internal/models"
 )
 
 type Task struct {
